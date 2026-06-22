@@ -16,6 +16,7 @@ from citeproof.qualitative_lens import (
     inspect_qualitative_tensions,
 )
 from citeproof.quantities import QuantityMention, numbers_to_units, quantity_mentions
+from citeproof.technical_property_lens import inspect_technical_property_conflicts
 from citeproof.text import token_overlap_ratio
 
 MATERIAL_ANCHOR_RE = re.compile(
@@ -76,6 +77,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + negation_findings
         + list(inspect_qualitative_conflicts(claim, evidence))
         + list(inspect_attribute_conflicts(claim, evidence))
+        + list(inspect_technical_property_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)

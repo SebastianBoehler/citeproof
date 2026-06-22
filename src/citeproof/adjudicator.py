@@ -22,6 +22,14 @@ ATTRIBUTE_ENTITY_CONFLICTS = (
     "summarization style conflict",
     "agent setting conflict",
 )
+TECHNICAL_PROPERTY_CONFLICTS = (
+    "complexity conflict",
+    "inference fidelity conflict",
+    "trainability conflict",
+    "reward density conflict",
+    "evaluation domain conflict",
+    "data sensitivity conflict",
+)
 
 
 def adjudicate_evidence(
@@ -114,6 +122,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
     if "availability conflict" in text:
         return FailureMode.NEGATION_CONFLICT
     if any(conflict in text for conflict in ATTRIBUTE_ENTITY_CONFLICTS):
+        return FailureMode.ENTITY_CONFLICT
+    if any(conflict in text for conflict in TECHNICAL_PROPERTY_CONFLICTS):
         return FailureMode.ENTITY_CONFLICT
     return FailureMode.CONFLICTING_SOURCES
 
