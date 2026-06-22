@@ -12,13 +12,13 @@ Current local scores after the strict verifier v2 high-recall evidence updates:
 | Benchmark | Total | Accuracy | Macro-F1 | False-Supported Rate |
 | --- | ---: | ---: | ---: | ---: |
 | `examples/claim_support.jsonl` | 4 | 1.0 | 0.8 | 0.0 |
-| `examples/edge_cases/claim_support.jsonl` | 22 | 1.0 | 0.8 | 0.0 |
+| `examples/edge_cases/claim_support.jsonl` | 24 | 1.0 | 0.8 | 0.0 |
 | `examples/hallucination` draft eval | 5 | 1.0 | 0.8 | 0.0 |
 
 These benchmarks are intentionally small and adversarial. They cover basic
 support, contradiction, partial support, source silence, numeric conflicts,
-temporal conflicts, material anchor swaps, comparison-direction swaps and
-comparison wording variants, hedged
+temporal conflicts, material anchor swaps, comparison-direction swaps,
+comparison wording variants, resource-efficiency paraphrases, hedged
 evidence, entity swaps, compound claims, failure-mode classification, and bibliography-gated
 hallucination checks.
 

@@ -47,6 +47,48 @@ SCOPED_EVIDENCE_RE = re.compile(
     re.IGNORECASE,
 )
 METRIC_RE = re.compile(r"\b(f1(?:\s+score)?|accuracy)\b", re.IGNORECASE)
+RESOURCE_REDUCTION_CLAIM_RE = re.compile(
+    r"\b(reduce|reduces|reduced|lower|lowers|decrease|decreases)\b",
+    re.IGNORECASE,
+)
+SAMPLE_EFFICIENCY_CLAIM_RE = re.compile(r"\bsample\s+efficiency\b", re.IGNORECASE)
+SAMPLE_EFFICIENCY_IMPROVE_RE = re.compile(
+    r"\b(improve|improves|improved|increase|increases|increased)\b",
+    re.IGNORECASE,
+)
+TIME_REDUCTION_EVIDENCE_RE = re.compile(
+    r"\b(?:fewer|less|reduced|half\s+as\s+many)\s+"
+    r"(?:training\s+)?(?:hours?|minutes?|seconds?|time)\b|"
+    r"\b(?:reduc(?:e|es|ed|ing)|lowers?|decreas(?:e|es|ed|ing))\s+"
+    r"(?:training\s+)?(?:hours?|minutes?|seconds?|time)\b|"
+    r"\b(?:training\s+)?(?:hours?|minutes?|seconds?|time)\s+"
+    r"(?:were|was\s+)?(?:reduced|lower)\b|"
+    r"\bless\s+wall[- ]clock\s+time\b",
+    re.IGNORECASE,
+)
+SAMPLE_REDUCTION_EVIDENCE_RE = re.compile(
+    r"\b(?:improves?|improved|increases?|increased)\s+sample\s+efficiency\b|"
+    r"\b(?:fewer|less|reduced)\s+"
+    r"(?:(?:environment\s+)?interactions?|(?:training\s+)?samples?|examples?)\b|"
+    r"\b(?:(?:environment\s+)?interactions?|(?:training\s+)?samples?|examples?)\s+"
+    r"(?:were|was\s+)?(?:reduced|lower)\b",
+    re.IGNORECASE,
+)
+RESOURCE_NEGATION_RE = re.compile(
+    r"\b(does\s+not|did\s+not|failed\s+to|no\s+reduction|no\s+fewer|no\s+less|without)\b",
+    re.IGNORECASE,
+)
+TIME_RESOURCE_TERM_RE = re.compile(
+    r"\b(?:training\s+)?(?:hours?|minutes?|seconds?|time)\b|"
+    r"\bwall[- ]clock\b",
+    re.IGNORECASE,
+)
+SAMPLE_RESOURCE_TERM_RE = re.compile(
+    r"\b(?:environment\s+)?interactions?\b|"
+    r"\b(?:training\s+)?samples?\b|"
+    r"\bexamples?\b",
+    re.IGNORECASE,
+)
 
 
 def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
@@ -88,6 +130,13 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
 
     if _has_semantic_support(claim, evidence, overlap):
         return EvidenceJudgment(Label.SUPPORTED, 0.74, "Anchored paraphrase support.")
+
+    if overlap >= 0.38 and _claims_resource_reduction(claim):
+        return EvidenceJudgment(
+            Label.PARTIALLY_SUPPORTED,
+            min(0.78, 0.42 + overlap / 2),
+            "Evidence mentions the resource dimension but not the claimed reduction.",
+        )
 
     if overlap >= 0.68:
         return EvidenceJudgment(Label.SUPPORTED, min(0.95, 0.55 + overlap / 2), "Strong lexical support.")
@@ -150,13 +199,7 @@ def _has_scope_gap(claim: str, evidence: str) -> bool:
 def _has_semantic_support(claim: str, evidence: str, overlap: float) -> bool:
     claim_lower = claim.lower()
     evidence_lower = evidence.lower()
-    if (
-        "training" in claim_lower
-        and "time" in claim_lower
-        and re.search(r"\breduc(?:e|es|ed|ing)\b", claim_lower)
-        and overlap >= 0.35
-        and ("half as many hours" in evidence_lower or "fewer hours" in evidence_lower)
-    ):
+    if _has_resource_reduction_support(claim, evidence, overlap):
         return True
     if (
         "bertscore" in claim_lower
@@ -175,6 +218,72 @@ def _has_semantic_support(claim: str, evidence: str, overlap: float) -> bool:
         and ("covers" in evidence_lower or "spans" in evidence_lower)
         and ("multiple" in evidence_lower or "diverse" in evidence_lower)
         and overlap >= 0.35
+    )
+
+
+def _has_resource_reduction_support(claim: str, evidence: str, overlap: float) -> bool:
+    if overlap < 0.35:
+        return False
+    if _claims_training_time_reduction(claim):
+        return _has_affirmative_resource_reduction(
+            evidence, TIME_REDUCTION_EVIDENCE_RE, TIME_RESOURCE_TERM_RE
+        )
+    if _claims_sample_efficiency_reduction(claim):
+        return _has_affirmative_resource_reduction(
+            evidence, SAMPLE_REDUCTION_EVIDENCE_RE, SAMPLE_RESOURCE_TERM_RE
+        )
+    return False
+
+
+def _claims_resource_reduction(claim: str) -> bool:
+    return _claims_training_time_reduction(claim) or _claims_sample_efficiency_reduction(claim)
+
+
+def _claims_training_time_reduction(claim: str) -> bool:
+    claim_lower = claim.lower()
+    return bool(
+        "training" in claim_lower
+        and "time" in claim_lower
+        and RESOURCE_REDUCTION_CLAIM_RE.search(claim)
+    )
+
+
+def _claims_sample_efficiency_reduction(claim: str) -> bool:
+    return bool(
+        SAMPLE_EFFICIENCY_CLAIM_RE.search(claim)
+        and (
+            SAMPLE_EFFICIENCY_IMPROVE_RE.search(claim)
+            or RESOURCE_REDUCTION_CLAIM_RE.search(claim)
+        )
+    )
+
+
+def _has_affirmative_resource_reduction(
+    evidence: str,
+    reduction_pattern: re.Pattern[str],
+    resource_term_pattern: re.Pattern[str],
+) -> bool:
+    return bool(
+        reduction_pattern.search(evidence)
+        and not _has_nearby_match(
+            RESOURCE_NEGATION_RE, resource_term_pattern, evidence, max_gap=80
+        )
+    )
+
+
+def _has_nearby_match(
+    left_pattern: re.Pattern[str],
+    right_pattern: re.Pattern[str],
+    text: str,
+    *,
+    max_gap: int = 60,
+) -> bool:
+    left_matches = tuple(left_pattern.finditer(text))
+    right_matches = tuple(right_pattern.finditer(text))
+    return any(
+        abs(left.start() - right.start()) <= max_gap
+        for left in left_matches
+        for right in right_matches
     )
 
 

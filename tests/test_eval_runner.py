@@ -101,3 +101,18 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
     } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)
+
+
+def test_resource_paraphrase_edge_cases_pass() -> None:
+    cases = {
+        case["id"]: case
+        for case in run_eval_cases(REPO_ROOT / "examples/edge_cases/claim_support.jsonl")
+    }
+
+    for case_id in {
+        "training-time-fewer-hours-support",
+        "sample-efficiency-fewer-interactions-support",
+    }:
+        assert cases[case_id]["predicted_label"] == "supported"
+        assert cases[case_id]["pass"]
+        assert not cases[case_id]["false_supported"]
