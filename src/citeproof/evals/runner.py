@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Callable
 
+from citeproof.adjudicator import adjudicate_evidence
 from citeproof.entailment import judge_evidence
 from citeproof.evals.metrics import EvalSummary, summarize
 from citeproof.models import EvidenceJudgment, Label
@@ -34,7 +35,7 @@ def run_eval_cases(dataset_path: str | Path, judge: Judge = judge_evidence) -> l
         claim = str(data["claim"])
         evidence = str(data["evidence"])
         expected_label = Label(str(data["expected_label"]))
-        judgment = judge(claim, evidence)
+        judgment = adjudicate_evidence(claim, evidence, judge=judge)
         if data.get("id") is None:
             data["id"] = f"{path.name}:{line_number}"
         rows.append(
@@ -43,6 +44,7 @@ def run_eval_cases(dataset_path: str | Path, judge: Judge = judge_evidence) -> l
                 "expected_label": expected_label.value,
                 "predicted_label": judgment.label.value,
                 "confidence": round(judgment.confidence, 3),
+                "false_supported": expected_label != Label.SUPPORTED and judgment.label == Label.SUPPORTED,
                 "pass": expected_label == judgment.label,
                 "reason": judgment.reason,
             }

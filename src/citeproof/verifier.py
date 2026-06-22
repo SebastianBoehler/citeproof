@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
+from citeproof.adjudicator import adjudicate_evidence
 from citeproof.entailment import judge_evidence
 from citeproof.models import Claim, EvidenceJudgment, Label, SourceChunk, VerificationResult
 from citeproof.parser import parse_claims
@@ -43,7 +44,7 @@ def verify_claim(
             reason="No overlapping evidence was retrieved from the cited source.",
         )
 
-    judgments = [(chunk, judge(claim.text, chunk.text)) for chunk in retrieved]
+    judgments = [(chunk, adjudicate_evidence(claim.text, chunk.text, judge=judge)) for chunk in retrieved]
     chosen_chunk, chosen_judgment = _choose_judgment(judgments)
     evidence = tuple(chunk.to_evidence() for chunk, _judgment in judgments)
     return VerificationResult(
