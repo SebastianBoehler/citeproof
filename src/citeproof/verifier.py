@@ -257,6 +257,7 @@ def _review_action(mode: FailureMode | None) -> str:
         FailureMode.NUMERIC_CONFLICT: "fix the numeric value or cite a matching source",
         FailureMode.YEAR_CONFLICT: "fix the year or cite a matching source",
         FailureMode.UNIT_CONFLICT: "fix the unit or cite a matching source",
+        FailureMode.ENTITY_CONFLICT: "fix the entity or cite a matching source",
         FailureMode.NEGATION_CONFLICT: "fix the result polarity or cite a matching source",
         FailureMode.HEDGED_EVIDENCE: "hedge the claim or cite stronger evidence",
         FailureMode.SCOPE_OVERSTATEMENT: "narrow the claim scope",
