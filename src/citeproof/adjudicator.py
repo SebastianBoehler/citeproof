@@ -31,6 +31,7 @@ TECHNICAL_PROPERTY_CONFLICTS = (
     "data sensitivity conflict",
 )
 STATISTICAL_CONFLICTS = (
+    "auroc averaging conflict",
     "confidence interval conflict",
     "f1 averaging conflict",
     "summary statistic conflict",
@@ -138,6 +139,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
     if "measurement target tension" in text:
         return FailureMode.SCOPE_OVERSTATEMENT
     if "negation conflict" in text or "direction conflict" in text:
+        return FailureMode.NEGATION_CONFLICT
+    if "contrast exclusion conflict" in text:
         return FailureMode.NEGATION_CONFLICT
     if "overhead conflict" in text:
         return FailureMode.NEGATION_CONFLICT

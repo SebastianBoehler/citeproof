@@ -60,6 +60,13 @@ GROUPS = (
         ),
     ),
     StatisticalGroup(
+        "AUROC averaging",
+        (
+            ("macro-AUROC", (r"\bmacro[- ]?(?:auroc|auc)\b",)),
+            ("micro-AUROC", (r"\bmicro[- ]?(?:auroc|auc)\b",)),
+        ),
+    ),
+    StatisticalGroup(
         "Summary statistic",
         (
             ("mean", (r"\bmean\b",)),
@@ -98,7 +105,8 @@ GROUPS = (
 
 VALUE_TERMS_RE = re.compile(
     r"\b("
-    r"excludes?|includes?|macro[- ]?f1|mean|median|micro[- ]?f1|non[- ]?parametric|"
+    r"excludes?|includes?|macro[- ]?(?:auroc|auc|f1)|mean|median|"
+    r"micro[- ]?(?:auroc|auc|f1)|non[- ]?parametric|"
     r"one[- ]tailed|paired|parametric|standard\s+deviation|standard\s+error|"
     r"p[- ]?value|p|significant|statistically|two[- ]tailed|unpaired|zero"
     r")\b",

@@ -11,6 +11,7 @@ from citeproof.context_lens import (
     inspect_component_exclusion_conflicts,
     inspect_context_tensions,
 )
+from citeproof.contrast_lens import inspect_contrast_exclusion_conflicts
 from citeproof.models import FactInspection, Label
 from citeproof.negation_lens import (
     inspect_negation_and_comparator_conflicts,
@@ -94,6 +95,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + list(inspect_protocol_conflicts(claim, evidence))
         + list(inspect_role_conflicts(claim, evidence))
         + list(inspect_component_exclusion_conflicts(claim, evidence))
+        + list(inspect_contrast_exclusion_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)

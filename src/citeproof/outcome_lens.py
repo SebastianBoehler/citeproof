@@ -17,7 +17,9 @@ class OutcomeTerm:
 
 OUTCOMES = (
     OutcomeTerm("accuracy", (r"\baccuracy\b",)),
+    OutcomeTerm("BLEU", (r"\bbleu\b",)),
     OutcomeTerm("calibration", (r"\bcalibration\b",)),
+    OutcomeTerm("chrF", (r"\bchrf\b",)),
     OutcomeTerm("discrimination", (r"\bdiscrimination\b",)),
     OutcomeTerm("factuality", (r"\bfactuality\b",)),
     OutcomeTerm("hallucinations", (r"\bhallucinations?\b",), lower_is_better=True),
@@ -52,7 +54,7 @@ HIGHER_RE = re.compile(r"\b(higher|increased|larger|greater)\b", re.IGNORECASE)
 MIXED_CUE_RE = re.compile(r"\b(but|whereas|while|although|however)\b", re.IGNORECASE)
 VALUE_TERMS_RE = re.compile(
     r"\b("
-    r"accuracy|calibration|decreas(?:e|es|ed)|discrimination|factuality|greater|"
+    r"accuracy|bleu|calibration|chrf|decreas(?:e|es|ed)|discrimination|factuality|greater|"
     r"hallucinations?|higher|improv(?:e|es|ed)|increas(?:e|es|ed)|larger|latency|"
     r"loss|lowers?|lowered|mae|mean\s+absolute\s+error|mortality|perplexity|"
     r"readmissions?|reduc(?:e|es|ed)|unchanged|worse|worsens?"
