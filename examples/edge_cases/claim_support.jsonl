@@ -61,3 +61,10 @@
 {"id":"pairedness-statistical-conflict","claim":"The test uses a paired bootstrap.","evidence":"The test uses an unpaired bootstrap.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"tail-count-statistical-conflict","claim":"The analysis uses a one-tailed test.","evidence":"The analysis uses a two-tailed test.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"test-family-statistical-conflict","claim":"The method uses a parametric test.","evidence":"The method uses a nonparametric test.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"large-small-strength-conflict","claim":"The method yields a large improvement.","evidence":"The method yields a small improvement.","expected_label":"contradicted"}
+{"id":"substantial-modest-strength-conflict","claim":"The method yields substantial gains.","evidence":"The method yields modest gains.","expected_label":"contradicted"}
+{"id":"no-overhead-strength-conflict","claim":"The method adds no computational overhead.","evidence":"The method adds small computational overhead.","expected_label":"contradicted","expected_failure_mode":"negation_conflict"}
+{"id":"causal-association-strength-tension","claim":"The intervention causes improved accuracy.","evidence":"The intervention is associated with improved accuracy.","expected_label":"partially_supported"}
+{"id":"causal-correlation-strength-tension","claim":"The variable causes higher mortality.","evidence":"The variable is correlated with higher mortality.","expected_label":"partially_supported"}
+{"id":"best-competitive-strength-tension","claim":"The method achieves the best accuracy.","evidence":"The method achieves competitive accuracy.","expected_label":"partially_supported"}
+{"id":"full-partial-strength-tension","claim":"The method fully recovers the signal.","evidence":"The method partially recovers the signal.","expected_label":"partially_supported"}
