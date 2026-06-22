@@ -7,7 +7,7 @@ from collections.abc import Callable
 from citeproof.claims import atomize_claim
 from citeproof.entailment import judge_evidence
 from citeproof.fact_lenses import inspect_facts
-from citeproof.models import Claim, EvidenceJudgment, FactInspection, Label
+from citeproof.models import Claim, EvidenceJudgment, FactInspection, FailureMode, Label
 
 Judge = Callable[[str, str], EvidenceJudgment]
 
@@ -42,14 +42,17 @@ def adjudicate_judgments(
     """Combine verifier signals with false-supported avoidance as primary rule."""
 
     if facts.label == Label.CONTRADICTED:
-        return EvidenceJudgment(Label.CONTRADICTED, 0.9, "; ".join(facts.findings))
+        mode = _fact_failure_mode(facts)
+        return EvidenceJudgment(Label.CONTRADICTED, 0.9, "; ".join(facts.findings), mode)
     if facts.label == Label.PARTIALLY_SUPPORTED and heuristic.label != Label.UNSUPPORTED:
-        return EvidenceJudgment(Label.PARTIALLY_SUPPORTED, 0.72, "; ".join(facts.findings))
+        mode = FailureMode.HEDGED_EVIDENCE if _has_hedge_finding(facts) else FailureMode.SCOPE_OVERSTATEMENT
+        return EvidenceJudgment(Label.PARTIALLY_SUPPORTED, 0.72, "; ".join(facts.findings), mode)
     if nli and nli.label == Label.CONTRADICTED and heuristic.label == Label.UNSUPPORTED:
         return EvidenceJudgment(
             Label.UNCERTAIN,
             min(nli.confidence, 0.65),
             "NLI predicts contradiction, but retrieved evidence has weak claim overlap.",
+            FailureMode.MODEL_DISAGREEMENT,
         )
     if nli and nli.label == Label.CONTRADICTED:
         return EvidenceJudgment(Label.CONTRADICTED, nli.confidence, nli.reason)
@@ -61,9 +64,27 @@ def adjudicate_judgments(
     return heuristic
 
 
-def _combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgment:
+def _fact_failure_mode(facts: FactInspection) -> FailureMode:
+    text = " ".join(facts.findings).lower()
+    if "year conflict" in text:
+        return FailureMode.YEAR_CONFLICT
+    if "numeric conflict" in text:
+        return FailureMode.NUMERIC_CONFLICT
+    return FailureMode.CONFLICTING_SOURCES
+
+
+def _has_hedge_finding(facts: FactInspection) -> bool:
+    return any("hedged" in finding.lower() or "inconclusive" in finding.lower() for finding in facts.findings)
+
+
+def combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgment:
     if not judgments:
-        return EvidenceJudgment(Label.UNCERTAIN, 0.2, "No atomic claims were produced.")
+        return EvidenceJudgment(
+            Label.UNCERTAIN,
+            0.2,
+            "No atomic claims were produced.",
+            FailureMode.NO_RATIONALE_SPAN,
+        )
     labels = [judgment.label for judgment in judgments]
     if Label.CONTRADICTED in labels:
         strongest = max(
@@ -79,7 +100,21 @@ def _combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgme
             Label.PARTIALLY_SUPPORTED,
             0.66,
             "Only some atomic subclaims are supported by the retrieved evidence.",
+            FailureMode.MISSING_ATOM_SUPPORT,
         )
     if Label.UNCERTAIN in labels:
-        return EvidenceJudgment(Label.UNCERTAIN, 0.45, "Atomic subclaims could not be verified.")
-    return EvidenceJudgment(Label.UNSUPPORTED, 0.35, "No atomic subclaim is supported.")
+        return EvidenceJudgment(
+            Label.UNCERTAIN,
+            0.45,
+            "Atomic subclaims could not be verified.",
+            FailureMode.NO_RATIONALE_SPAN,
+        )
+    return EvidenceJudgment(
+        Label.UNSUPPORTED,
+        0.35,
+        "No atomic subclaim is supported.",
+        FailureMode.MISSING_ATOM_SUPPORT,
+    )
+
+
+_combine_atom_judgments = combine_atom_judgments

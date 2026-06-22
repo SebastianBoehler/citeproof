@@ -5,10 +5,22 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
-from citeproof.adjudicator import adjudicate_evidence
+from citeproof.adjudicator import adjudicate_evidence, combine_atom_judgments
+from citeproof.claims import atomize_claim
 from citeproof.entailment import judge_evidence
-from citeproof.models import Claim, EvidenceJudgment, Label, SourceChunk, VerificationResult
+from citeproof.models import (
+    AtomVerification,
+    Claim,
+    ClaimVerificationTrace,
+    EvidenceJudgment,
+    FailureMode,
+    Label,
+    RationaleSpan,
+    SourceChunk,
+    VerificationResult,
+)
 from citeproof.parser import parse_claims
+from citeproof.rationales import select_rationales
 from citeproof.retrieval import cited_keys_present, retrieve_evidence
 from citeproof.sources import build_chunks, load_sources
 
@@ -24,6 +36,16 @@ def verify_claim(
     """Verify one claim against source chunks."""
 
     if claim.citation_keys and not cited_keys_present(claim, chunks):
+        trace = ClaimVerificationTrace(
+            claim=claim.text,
+            citations=claim.citation_keys,
+            source_gate_status="source_not_resolved",
+            atom_verifications=(),
+            final_label=Label.UNCERTAIN,
+            final_confidence=0.2,
+            final_failure_mode=FailureMode.SOURCE_NOT_RESOLVED,
+            review_action="load cited source or fix citation key",
+        )
         return VerificationResult(
             claim=claim.text,
             label=Label.UNCERTAIN,
@@ -31,10 +53,22 @@ def verify_claim(
             citations=claim.citation_keys,
             evidence=(),
             reason="At least one cited source key is missing from the loaded source set.",
+            failure_mode=FailureMode.SOURCE_NOT_RESOLVED,
+            trace=trace,
         )
 
     retrieved = retrieve_evidence(claim, chunks, limit=evidence_limit)
     if not retrieved:
+        trace = ClaimVerificationTrace(
+            claim=claim.text,
+            citations=claim.citation_keys,
+            source_gate_status="passed",
+            atom_verifications=(),
+            final_label=Label.UNSUPPORTED,
+            final_confidence=0.3,
+            final_failure_mode=FailureMode.WEAK_RETRIEVAL,
+            review_action="find stronger evidence or remove citation",
+        )
         return VerificationResult(
             claim=claim.text,
             label=Label.UNSUPPORTED,
@@ -42,18 +76,41 @@ def verify_claim(
             citations=claim.citation_keys,
             evidence=(),
             reason="No overlapping evidence was retrieved from the cited source.",
+            failure_mode=FailureMode.WEAK_RETRIEVAL,
+            trace=trace,
         )
 
-    judgments = [(chunk, adjudicate_evidence(claim.text, chunk.text, judge=judge)) for chunk in retrieved]
-    chosen_chunk, chosen_judgment = _choose_judgment(judgments)
-    evidence = tuple(chunk.to_evidence() for chunk, _judgment in judgments)
+    atom_verifications = _verify_atoms(claim, retrieved, judge)
+    atom_judgment = combine_atom_judgments(
+        [
+            EvidenceJudgment(atom.label, atom.confidence, atom.reason, atom.failure_mode)
+            for atom in atom_verifications
+        ]
+    )
+    evidence = tuple(
+        rationale.to_evidence()
+        for atom in atom_verifications
+        for rationale in atom.rationales
+    )
+    trace = ClaimVerificationTrace(
+        claim=claim.text,
+        citations=claim.citation_keys,
+        source_gate_status="passed",
+        atom_verifications=tuple(atom_verifications),
+        final_label=atom_judgment.label,
+        final_confidence=round(atom_judgment.confidence, 3),
+        final_failure_mode=atom_judgment.failure_mode,
+        review_action=_review_action(atom_judgment.failure_mode),
+    )
     return VerificationResult(
         claim=claim.text,
-        label=chosen_judgment.label,
-        confidence=round(chosen_judgment.confidence, 3),
+        label=atom_judgment.label,
+        confidence=round(atom_judgment.confidence, 3),
         citations=claim.citation_keys,
         evidence=evidence,
-        reason=f"{chosen_judgment.reason} Top source: {chosen_chunk.source_id}.",
+        reason=atom_judgment.reason,
+        failure_mode=atom_judgment.failure_mode,
+        trace=trace,
     )
 
 
@@ -93,3 +150,76 @@ def _choose_judgment(
         Label.UNCERTAIN: 0,
     }
     return max(judgments, key=lambda item: (priority[item[1].label], item[1].confidence))
+
+
+def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list[AtomVerification]:
+    verifications: list[AtomVerification] = []
+    group = atomize_claim(claim)
+    for atom in group.atoms:
+        atom_claim = Claim(atom.text, atom.citation_keys)
+        candidates = select_rationales(atom_claim, chunks, limit=2)
+        if not candidates:
+            verifications.append(
+                AtomVerification(
+                    text=atom.text,
+                    context=atom.context,
+                    label=Label.UNSUPPORTED,
+                    confidence=0.3,
+                    rationales=(),
+                    failure_mode=FailureMode.NO_RATIONALE_SPAN,
+                    reason="No rationale span was selected for this atom.",
+                )
+            )
+            continue
+        top = candidates[0]
+        judgment = adjudicate_evidence(atom.text, top.text, judge=judge)
+        rationales = tuple(
+            RationaleSpan(
+                source_id=candidate.source_id,
+                citation_key=candidate.citation_key,
+                text=candidate.text,
+                page=candidate.page,
+                relation=_relation_for(judgment.label),
+                score=candidate.lexical_score,
+            )
+            for candidate in candidates
+        )
+        verifications.append(
+            AtomVerification(
+                text=atom.text,
+                context=atom.context,
+                label=judgment.label,
+                confidence=round(judgment.confidence, 3),
+                rationales=rationales,
+                failure_mode=judgment.failure_mode,
+                reason=judgment.reason,
+            )
+        )
+    return verifications
+
+
+def _relation_for(label: Label) -> str:
+    if label == Label.SUPPORTED:
+        return "support"
+    if label == Label.CONTRADICTED:
+        return "contradict"
+    if label == Label.UNSUPPORTED:
+        return "neutral"
+    return "undetermined"
+
+
+def _review_action(mode: FailureMode | None) -> str:
+    if mode is None:
+        return "none"
+    actions = {
+        FailureMode.SOURCE_NOT_RESOLVED: "load cited source or fix citation key",
+        FailureMode.WEAK_RETRIEVAL: "find stronger evidence or remove citation",
+        FailureMode.NO_RATIONALE_SPAN: "find exact supporting span or narrow the claim",
+        FailureMode.MISSING_ATOM_SUPPORT: "rewrite unsupported atom or add a better citation",
+        FailureMode.NUMERIC_CONFLICT: "fix the numeric value or cite a matching source",
+        FailureMode.YEAR_CONFLICT: "fix the year or cite a matching source",
+        FailureMode.HEDGED_EVIDENCE: "hedge the claim or cite stronger evidence",
+        FailureMode.SCOPE_OVERSTATEMENT: "narrow the claim scope",
+        FailureMode.MODEL_DISAGREEMENT: "manually inspect model disagreement",
+    }
+    return actions.get(mode, "manually inspect cited evidence")
