@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from citeproof.claims import atomize_claim
 from citeproof.entailment import judge_evidence
 from citeproof.fact_lenses import inspect_facts
-from citeproof.models import EvidenceJudgment, FactInspection, Label
+from citeproof.models import Claim, EvidenceJudgment, FactInspection, Label
 
 Judge = Callable[[str, str], EvidenceJudgment]
 
@@ -18,6 +19,15 @@ def adjudicate_evidence(
 ) -> EvidenceJudgment:
     """Judge one evidence span with deterministic gates before optional NLI."""
 
+    group = atomize_claim(Claim(claim))
+    if len(group.atoms) > 1:
+        return _combine_atom_judgments(
+            [_adjudicate_single(atom.text, evidence, judge) for atom in group.atoms]
+        )
+    return _adjudicate_single(claim, evidence, judge)
+
+
+def _adjudicate_single(claim: str, evidence: str, judge: Judge) -> EvidenceJudgment:
     heuristic = judge_evidence(claim, evidence)
     facts = inspect_facts(claim, evidence)
     nli = None if judge is judge_evidence else judge(claim, evidence)
@@ -49,3 +59,27 @@ def adjudicate_judgments(
     if heuristic.label == Label.SUPPORTED and nli and nli.label != Label.SUPPORTED:
         return EvidenceJudgment(Label.PARTIALLY_SUPPORTED, 0.68, "NLI did not confirm full support.")
     return heuristic
+
+
+def _combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgment:
+    if not judgments:
+        return EvidenceJudgment(Label.UNCERTAIN, 0.2, "No atomic claims were produced.")
+    labels = [judgment.label for judgment in judgments]
+    if Label.CONTRADICTED in labels:
+        strongest = max(
+            (judgment for judgment in judgments if judgment.label == Label.CONTRADICTED),
+            key=lambda judgment: judgment.confidence,
+        )
+        return strongest
+    if all(label == Label.SUPPORTED for label in labels):
+        confidence = min(judgment.confidence for judgment in judgments)
+        return EvidenceJudgment(Label.SUPPORTED, confidence, "All atomic subclaims are supported.")
+    if any(label in {Label.SUPPORTED, Label.PARTIALLY_SUPPORTED} for label in labels):
+        return EvidenceJudgment(
+            Label.PARTIALLY_SUPPORTED,
+            0.66,
+            "Only some atomic subclaims are supported by the retrieved evidence.",
+        )
+    if Label.UNCERTAIN in labels:
+        return EvidenceJudgment(Label.UNCERTAIN, 0.45, "Atomic subclaims could not be verified.")
+    return EvidenceJudgment(Label.UNSUPPORTED, 0.35, "No atomic subclaim is supported.")

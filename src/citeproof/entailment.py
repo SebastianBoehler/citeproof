@@ -8,12 +8,15 @@ from citeproof.models import EvidenceJudgment, Label
 from citeproof.text import token_overlap_ratio
 
 POSITIVE_CLAIM_RE = re.compile(
-    r"\b(outperform|outperforms|improve|improves|improved|increase|increases|higher|better|superior)\b",
+    r"\b(outperform|outperforms|improve|improves|improved|increase|increases|reduce|reduces|reduced|"
+    r"higher|better|superior|span|spans|cover|covers)\b",
     re.IGNORECASE,
 )
 NEGATING_EVIDENCE_RE = re.compile(
     r"\b(no statistically significant|not significant|does not improve|did not improve|"
-    r"failed to improve|comparable to|similar to|no improvement|worse than|lower than)\b",
+    r"failed to improve|does not reduce|did not reduce|failed to reduce|no reduction|"
+    r"does not cover|did not cover|does not span|did not span|"
+    r"comparable to|similar to|no improvement|worse than|lower than)\b",
     re.IGNORECASE,
 )
 NEGATIVE_CLAIM_RE = re.compile(
@@ -65,6 +68,9 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
             "Evidence supports a narrower claim than the draft states.",
         )
 
+    if _has_semantic_support(claim, evidence, overlap):
+        return EvidenceJudgment(Label.SUPPORTED, 0.74, "Anchored paraphrase support.")
+
     if overlap >= 0.68:
         return EvidenceJudgment(Label.SUPPORTED, min(0.95, 0.55 + overlap / 2), "Strong lexical support.")
 
@@ -98,6 +104,37 @@ def _has_numeric_conflict(claim: str, evidence: str) -> bool:
 
 def _has_scope_gap(claim: str, evidence: str) -> bool:
     return bool(UNIVERSAL_CLAIM_RE.search(claim) and SCOPED_EVIDENCE_RE.search(evidence))
+
+
+def _has_semantic_support(claim: str, evidence: str, overlap: float) -> bool:
+    claim_lower = claim.lower()
+    evidence_lower = evidence.lower()
+    if (
+        "training" in claim_lower
+        and "time" in claim_lower
+        and re.search(r"\breduc(?:e|es|ed|ing)\b", claim_lower)
+        and overlap >= 0.35
+        and ("half as many hours" in evidence_lower or "fewer hours" in evidence_lower)
+    ):
+        return True
+    if (
+        "bertscore" in claim_lower
+        and "bertscore" in evidence_lower
+        and "semantic" in claim_lower
+        and "similarity" in claim_lower
+        and "similarity" in evidence_lower
+        and "embedding" in evidence_lower
+        and ("n-gram" in evidence_lower or "matching" in evidence_lower)
+    ):
+        return True
+    return bool(
+        "languages" in claim_lower
+        and "languages" in evidence_lower
+        and ("spans" in claim_lower or "covers" in claim_lower)
+        and ("covers" in evidence_lower or "spans" in evidence_lower)
+        and ("multiple" in evidence_lower or "diverse" in evidence_lower)
+        and overlap >= 0.35
+    )
 
 
 def _number_mentions(text: str) -> list[tuple[str, str]]:

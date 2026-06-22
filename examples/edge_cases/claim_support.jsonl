@@ -8,3 +8,5 @@
 {"id":"temporal-conflict","claim":"Qwen2.5 Technical Report was published in 2025.","evidence":"Qwen2.5 Technical Report was released in 2024.","expected_label":"contradicted"}
 {"id":"hedged-evidence","claim":"The adapter improves transfer to unseen domains.","evidence":"The adapter may improve transfer to unseen domains, but the study was inconclusive.","expected_label":"partially_supported"}
 {"id":"entity-swap","claim":"LoRA freezes pretrained weights and trains rank-decomposition matrices.","evidence":"QLoRA quantizes pretrained weights to 4-bit precision and trains LoRA adapters.","expected_label":"partially_supported"}
+{"id":"compound-dataset-partial","claim":"WildChat contains 1M conversations and provides medical expert annotations.","evidence":"WildChat contains 1M ChatGPT interaction logs spanning diverse topics and languages.","expected_label":"partially_supported"}
+{"id":"compound-dataset-supported","claim":"WildChat contains 1M conversations and spans diverse languages.","evidence":"WildChat contains 1M ChatGPT interaction logs and covers multiple languages.","expected_label":"supported"}

@@ -40,3 +40,21 @@ def test_adjudicate_evidence_uses_fact_lenses() -> None:
     )
 
     assert result.label == Label.CONTRADICTED
+
+
+def test_atom_missing_support_caps_parent_at_partial() -> None:
+    result = adjudicate_evidence(
+        "WildChat contains 1M conversations and provides medical expert annotations.",
+        "WildChat contains 1M ChatGPT interaction logs spanning diverse topics and languages.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+
+
+def test_all_supported_atoms_can_support_parent() -> None:
+    result = adjudicate_evidence(
+        "WildChat contains 1M conversations and spans diverse languages.",
+        "WildChat contains 1M ChatGPT interaction logs and covers multiple languages.",
+    )
+
+    assert result.label == Label.SUPPORTED

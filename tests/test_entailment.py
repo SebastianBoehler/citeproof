@@ -46,3 +46,39 @@ def test_detects_scope_overstatement_as_partial() -> None:
     )
 
     assert judgment.label == Label.PARTIALLY_SUPPORTED
+
+
+def test_detects_training_time_paraphrase_support() -> None:
+    judgment = judge_evidence(
+        "Method X reduces training time.",
+        "Training with Method X required half as many hours as the baseline.",
+    )
+
+    assert judgment.label == Label.SUPPORTED
+
+
+def test_reduce_negation_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "Method X reduces training time.",
+        "Method X does not reduce training time.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+
+
+def test_detects_metric_paraphrase_support() -> None:
+    judgment = judge_evidence(
+        "BERTScore captures semantic similarity beyond exact lexical overlap.",
+        "BERTScore computes token-level contextual embedding similarity rather than n-gram matching.",
+    )
+
+    assert judgment.label == Label.SUPPORTED
+
+
+def test_language_negation_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "WildChat spans diverse languages.",
+        "WildChat does not cover multiple languages.",
+    )
+
+    assert judgment.label != Label.SUPPORTED
