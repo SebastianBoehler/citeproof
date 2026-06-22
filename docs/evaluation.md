@@ -13,12 +13,18 @@ Current local scores after the conservative hybrid verifier implementation:
 | --- | ---: | ---: | ---: | ---: |
 | `examples/claim_support.jsonl` | 4 | 1.0 | 0.8 | 0.0 |
 | `examples/edge_cases/claim_support.jsonl` | 12 | 1.0 | 0.8 | 0.0 |
+| `examples/edge_cases/claim_support.jsonl` with local NLI | 12 | 0.8333 | 0.5492 | 0.0 |
 | `examples/hallucination` draft eval | 5 | 1.0 | 0.8 | 0.0 |
 
 These benchmarks are intentionally small and adversarial. They cover basic
 support, contradiction, partial support, source silence, numeric conflicts,
 temporal conflicts, hedged evidence, entity swaps, compound claims, and
 bibliography-gated hallucination checks.
+
+The local NLI row uses `cross-encoder/nli-deberta-v3-small` from the Hugging
+Face cache. It preserved the zero false-supported target on the edge set, but
+over-called one partial case as `contradicted` and treated one source-silence
+case as `uncertain`.
 
 ## Reading Scores
 
