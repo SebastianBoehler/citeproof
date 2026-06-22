@@ -68,6 +68,27 @@ GROUPS = (
         ),
     ),
     TechnicalPropertyGroup(
+        "Data origin",
+        (
+            (
+                "synthetic",
+                (
+                    r"\bsynthetic\s+(?:clinical\s+)?(?:data|dialogues?|images?|interactions?|queries|records?)\b",
+                    r"\bsynthetic\s+user\s+(?:dialogues?|interactions?|queries)\b",
+                    r"\bsimulated\s+(?:user\s+)?(?:data|dialogues?|images?|interactions?|queries|records?)\b",
+                ),
+            ),
+            (
+                "real",
+                (
+                    r"\breal\s+(?:clinical\s+)?(?:data|dialogues?|images?|interactions?|queries|records?)\b",
+                    r"\breal\s+user\s+(?:dialogues?|interactions?|queries)\b",
+                    r"\breal\s+patient\s+records?\b",
+                ),
+            ),
+        ),
+    ),
+    TechnicalPropertyGroup(
         "Trainable scope",
         (
             ("all model weights", (r"\ball\s+(?:model\s+)?weights\b", r"\ball\s+parameters\b")),
@@ -128,12 +149,13 @@ GROUPS = (
 
 TRIGGER_WORDS_RE = re.compile(
     r"\b("
-    r"adapter|all|approximate|approximation|architecture|base|beam|causal|clm|constant|"
+    r"adapter|all|approximate|approximation|architecture|base|beam|causal|clinical|clm|constant|"
     r"cubic|data|decod(?:e|es|ed|ing)|dense|detection|domain|exact|experts?|"
     r"exponential|few|fine|fixed|frozen|greedy|inference|keeps?|kept|language|linear|"
     r"logarithmic|low|masked|medical|mlm|model|modeling|moe|objective|one|out|"
     r"parameters|pretrained|private|public|quadratic|rank|records?|replaced|rewards?|"
-    r"rtd|sampling|search|shot|sparse|time|token|transformer|tuned|tuning|weights?|zero"
+    r"real|rtd|sampling|search|shot|simulated|sparse|synthetic|time|token|transformer|"
+    r"tuned|tuning|user|weights?|zero"
     r")\b",
     re.IGNORECASE,
 )

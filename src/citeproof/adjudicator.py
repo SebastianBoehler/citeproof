@@ -29,6 +29,7 @@ TECHNICAL_PROPERTY_CONFLICTS = (
     "reward density conflict",
     "evaluation domain conflict",
     "data sensitivity conflict",
+    "data origin conflict",
     "trainable scope conflict",
     "architecture family conflict",
     "pretraining objective conflict",

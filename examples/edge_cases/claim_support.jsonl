@@ -145,3 +145,7 @@
 {"id":"decoding-strategy-conflict","claim":"The system decodes with greedy search.","evidence":"The system decodes with beam search.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"layer-count-conflict","claim":"The model has 12 layers.","evidence":"The model has 24 layers.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
 {"id":"attention-head-count-conflict","claim":"The model uses 16 attention heads.","evidence":"The model uses 32 attention heads.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"synthetic-real-image-origin-conflict","claim":"The dataset contains synthetic images.","evidence":"The dataset contains real clinical images.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"real-synthetic-query-origin-conflict","claim":"The benchmark uses real user queries.","evidence":"The benchmark uses synthetic user queries.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"simulated-real-interaction-origin-conflict","claim":"The benchmark evaluates simulated user interactions.","evidence":"The benchmark evaluates real user interactions.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"synthetic-real-dialogue-origin-conflict","claim":"The corpus contains synthetic dialogues.","evidence":"The corpus contains real user dialogues.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
