@@ -13,6 +13,7 @@ from citeproof.context_lens import (
     inspect_context_tensions,
 )
 from citeproof.contrast_lens import inspect_contrast_exclusion_conflicts
+from citeproof.measurement_lens import inspect_measurement_conflicts
 from citeproof.models import FactInspection, Label
 from citeproof.negation_lens import (
     inspect_negation_and_comparator_conflicts,
@@ -98,6 +99,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + list(inspect_component_exclusion_conflicts(claim, evidence))
         + list(inspect_contrast_exclusion_conflicts(claim, evidence))
         + list(inspect_clinical_conflicts(claim, evidence))
+        + list(inspect_measurement_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)

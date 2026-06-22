@@ -40,13 +40,15 @@ _WORD_NUMBER = (
 _WORD_UNIT = (
     r"percent|arms?|centers?|centres?|cohorts?|conversations?|days?|dialogues?|domains?|"
     r"doses?|examples?|g|gpus?|groups?|hours?|kg|languages?|mg|minutes?|ml|months?|"
+    r"parameters?|"
     r"participants?|patients?|samples?|seconds?|sites?|studies|subjects?|trials?|turns?|"
-    r"weeks?|years?"
+    r"tokens?|weeks?|years?"
 )
 _STOPWORD_PATTERN = r"and|as|by|for|from|in|of|on|or|than|to|with|without"
 _BRIDGE_WORD = rf"(?!(?:{_STOPWORD_PATTERN})(?!-)\b)[A-Za-z][A-Za-z-]*"
 _SCALE = {"thousand": Decimal("1000"), "million": Decimal("1000000")}
 _COMPACT_SCALE = {
+    "b": Decimal("1000000000"),
     "k": Decimal("1000"),
     "m": Decimal("1000000"),
 }
@@ -70,7 +72,7 @@ _QUANTITY_RE = re.compile(
     rf"(?<![A-Za-z0-9])"
     rf"(?P<value>"
     rf"(?P<scale_number>{_DIGIT_NUMBER})\s+(?P<scale>thousand|million)"
-    rf"|(?P<compact_number>{_DIGIT_NUMBER})(?P<compact>[kKmM])"
+    rf"|(?P<compact_number>{_DIGIT_NUMBER})(?P<compact>[bBkKmM])"
     rf"|(?P<plain_number>{_DIGIT_NUMBER})"
     rf"|(?P<word_number>{_WORD_NUMBER})"
     rf")"

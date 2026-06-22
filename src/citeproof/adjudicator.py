@@ -118,6 +118,7 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         or "ratio effect conflict" in text
         or "exact effect value conflict" in text
         or "endpoint window conflict" in text
+        or "metric value conflict" in text
     ):
         return FailureMode.NUMERIC_CONFLICT
     if "unit conflict" in text:
@@ -166,6 +167,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         or "population group conflict" in text
         or "trial design conflict" in text
     ):
+        return FailureMode.ENTITY_CONFLICT
+    if "benchmark version conflict" in text:
         return FailureMode.ENTITY_CONFLICT
     return FailureMode.CONFLICTING_SOURCES
 

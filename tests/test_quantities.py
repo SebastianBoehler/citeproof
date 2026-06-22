@@ -97,6 +97,15 @@ def test_quantity_units_recognizes_dose_units() -> None:
     }
 
 
+def test_quantity_units_normalizes_billion_suffix() -> None:
+    quantities = quantity_units("The model has 7B parameters and a 32k token context.")
+
+    assert quantities == {
+        "parameter": (Decimal("7000000000"),),
+        "token": (Decimal("32000"),),
+    }
+
+
 def test_quantity_units_normalizes_percent_units() -> None:
     quantities = quantity_units("Accuracy rose by 5 percent and recall rose by 7%.")
 

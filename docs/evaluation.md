@@ -12,7 +12,7 @@ Current local scores after the strict verifier v2 high-recall evidence updates:
 | Benchmark | Total | Accuracy | Macro-F1 | False-Supported Rate |
 | --- | ---: | ---: | ---: | ---: |
 | `examples/claim_support.jsonl` | 4 | 1.0 | 0.8 | 0.0 |
-| `examples/edge_cases/claim_support.jsonl` | 136 | 1.0 | 0.8 | 0.0 |
+| `examples/edge_cases/claim_support.jsonl` | 141 | 1.0 | 0.8 | 0.0 |
 | `examples/hallucination` draft eval | 5 | 1.0 | 0.8 | 0.0 |
 
 These benchmarks are intentionally small and adversarial. They cover basic
@@ -29,6 +29,7 @@ academic count conflicts,
 protocol-slot conflicts,
 contrastive exclusions, metric-slot conflicts,
 clinical effect slots, trainable-scope conflicts,
+measurement-slot conflicts,
 assertion-status tensions, role/provenance binding conflicts, tie-comparison tensions,
 context-limitation tensions, component-exclusion conflicts,
 outcome-status conflicts, mixed-effect tensions, protocol/measurement-slot conflicts,
