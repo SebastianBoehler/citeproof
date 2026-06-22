@@ -16,6 +16,8 @@ from citeproof.negation_lens import (
     inspect_negation_and_comparator_conflicts,
     inspect_negation_and_comparator_tensions,
 )
+from citeproof.outcome_lens import inspect_outcome_conflicts, inspect_outcome_tensions
+from citeproof.protocol_lens import inspect_protocol_conflicts, inspect_protocol_tensions
 from citeproof.qualitative_lens import (
     inspect_qualitative_conflicts,
     inspect_qualitative_tensions,
@@ -88,6 +90,8 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + list(inspect_technical_property_conflicts(claim, evidence))
         + list(inspect_statistical_conflicts(claim, evidence))
         + list(inspect_strength_conflicts(claim, evidence))
+        + list(inspect_outcome_conflicts(claim, evidence))
+        + list(inspect_protocol_conflicts(claim, evidence))
         + list(inspect_role_conflicts(claim, evidence))
         + list(inspect_component_exclusion_conflicts(claim, evidence))
     )
@@ -103,6 +107,8 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + inspect_qualitative_tensions(claim, evidence)
         + inspect_strength_tensions(claim, evidence)
         + inspect_assertion_status_tensions(claim, evidence)
+        + inspect_outcome_tensions(claim, evidence)
+        + inspect_protocol_tensions(claim, evidence)
         + inspect_context_tensions(claim, evidence)
     )
     if tension_findings:

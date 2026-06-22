@@ -124,6 +124,14 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         or "descriptor conflict" in text
     ):
         return FailureMode.NEGATION_CONFLICT
+    if "outcome status conflict" in text or "lower-is-better outcome conflict" in text:
+        return FailureMode.NEGATION_CONFLICT
+    if "release conflict" in text:
+        return FailureMode.NEGATION_CONFLICT
+    if "protocol conflict" in text:
+        return FailureMode.ENTITY_CONFLICT
+    if "measurement target tension" in text:
+        return FailureMode.SCOPE_OVERSTATEMENT
     if "negation conflict" in text or "direction conflict" in text:
         return FailureMode.NEGATION_CONFLICT
     if "overhead conflict" in text:

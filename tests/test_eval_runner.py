@@ -153,6 +153,22 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
         "simulation-only-factuality",
         "human-prefilter-condition",
         "matched-distribution-condition",
+        "calibration-unchanged-outcome-conflict",
+        "latency-no-change-outcome-conflict",
+        "mae-lower-is-better-outcome-conflict",
+        "hallucination-mixed-effect-outcome-tension",
+        "factuality-mixed-effect-outcome-tension",
+        "correction-method-protocol-conflict",
+        "dedup-preprocessing-protocol-conflict",
+        "train-test-leakage-protocol-conflict",
+        "commercial-use-protocol-conflict",
+        "correlation-sign-protocol-conflict",
+        "architecture-protocol-conflict",
+        "temporality-protocol-conflict",
+        "blinding-protocol-conflict",
+        "endpoint-measurement-target-tension",
+        "calibration-discrimination-target-tension",
+        "training-code-release-protocol-conflict",
     } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)
