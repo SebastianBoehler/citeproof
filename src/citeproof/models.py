@@ -34,6 +34,7 @@ class Source:
     citation_key: str
     title: str | None = None
     path: str | None = None
+    pages: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

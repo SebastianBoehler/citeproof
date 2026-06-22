@@ -7,13 +7,18 @@ measure changes before building editor or SaaS surfaces.
 
 ## Current Scope
 
-- Parse Markdown/LaTeX-style citation claims.
+- Parse Markdown/LaTeX-style citation claims, including explicit citation-level
+  clauses split by semicolons.
 - Load local PDF, text, Markdown, or JSONL sources from any directory.
+- Preserve PDF page numbers in retrieved evidence spans.
 - Align source files to BibTeX keys by title overlap when filenames are paper titles.
 - Retrieve citation-scoped evidence snippets.
 - Label claims as `supported`, `partially_supported`, `contradicted`,
   `unsupported`, or `uncertain`.
 - Check LaTeX citation keys against BibTeX entries and required fields.
+- Verify BibTeX entries against external scholarly metadata providers.
+- Run an optional transformer NLI verifier for evidence-vs-claim judgments.
+- Emit HALLMARK-compatible bibliography hallucination predictions.
 - Export JSON and Markdown evidence ledgers.
 - Run a small claim-support eval harness with false-supported rate.
 - Expose an optional MCP server for agent clients.
@@ -22,9 +27,10 @@ This is not bound to one paper repository layout. Pass explicit paths for the
 draft, bibliography, and source directory. CiteProof should work the same way
 for a thesis folder, a LaTeX project, a Markdown draft, or a paper directory.
 
-This is not yet a full academic verifier. It does not call external metadata
-APIs or run a trained NLI model. Those are next layers after the first testable
-loop is in place.
+HALLMARK is useful for reference-hallucination checks, not for proving that a
+specific cited sentence supports a paper claim. CiteProof keeps those two loops
+separate: bibliography reality is checked through metadata providers, while
+claim support is checked against local paper text.
 
 ## Quick Start
 
@@ -36,6 +42,7 @@ uv run citeproof eval-draft examples/hallucination/draft.md \
   --sources examples/hallucination/sources \
   --bib examples/hallucination/references.bib \
   --expected examples/hallucination/expected.jsonl
+uv run citeproof verify-metadata --bib examples/hallucination/references.bib --limit 2
 uv run pytest
 ```
 
@@ -61,8 +68,33 @@ uv run citeproof verify-paper path/to/paper.tex \
 When `--bib` is supplied, CiteProof only trusts source files that map to BibTeX
 entries. This prevents arbitrary local files from satisfying made-up citation
 keys. A fabricated BibTeX entry with a fabricated local PDF still needs the
-next metadata-verification layer, such as CrossRef/OpenAlex/arXiv/Semantic
-Scholar checks.
+external metadata-verification layer, such as CrossRef/OpenAlex/arXiv/Semantic
+Scholar checks through `verify-metadata`.
+
+Verify BibTeX entries against external metadata:
+
+```bash
+uv run citeproof verify-metadata --bib path/to/references.bib \
+  --providers crossref,openalex,semanticscholar,arxiv \
+  --json-output reports/metadata.json
+```
+
+Run the optional transformer NLI verifier:
+
+```bash
+uv sync --extra nli
+uv run citeproof verify-paper path/to/paper.tex \
+  --bib path/to/references.bib \
+  --sources path/to/papers \
+  --verifier nli
+```
+
+Generate HALLMARK prediction JSONL for bibliography hallucination scoring:
+
+```bash
+uv run citeproof hallmark-predict data/v1.0/dev_public.jsonl \
+  --output reports/hallmark_predictions.jsonl
+```
 
 Check only bibliography integrity:
 

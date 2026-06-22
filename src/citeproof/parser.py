@@ -28,12 +28,13 @@ def parse_claims(text: str, require_citation: bool = True) -> list[Claim]:
 
     claims: list[Claim] = []
     for sentence in split_sentences(_prepare_draft_text(text)):
-        citation_keys = extract_citation_keys(sentence)
-        if require_citation and not citation_keys:
-            continue
-        claim_text = clean_claim_text(sentence)
-        if claim_text:
-            claims.append(Claim(text=claim_text, citation_keys=tuple(citation_keys)))
+        for clause in split_citation_clauses(sentence):
+            citation_keys = extract_citation_keys(clause)
+            if require_citation and not citation_keys:
+                continue
+            claim_text = clean_claim_text(clause)
+            if claim_text:
+                claims.append(Claim(text=claim_text, citation_keys=tuple(citation_keys)))
     return claims
 
 
@@ -59,8 +60,26 @@ def clean_claim_text(text: str) -> str:
     return cleaned
 
 
+def split_citation_clauses(sentence: str) -> list[str]:
+    """Split one sentence into citation-local clauses when the boundary is explicit."""
+
+    pieces = [piece.strip() for piece in re.split(r";\s+", sentence) if piece.strip()]
+    cited_pieces = [piece for piece in pieces if extract_citation_keys(piece)]
+    if len(cited_pieces) < 2:
+        return [sentence]
+    return [_ensure_terminal_punctuation(piece, sentence) for piece in cited_pieces]
+
+
 def _split_latex_keys(raw: str) -> list[str]:
     return [part.strip() for part in raw.split(",")]
+
+
+def _ensure_terminal_punctuation(piece: str, original: str) -> str:
+    if piece[-1:] in ".!?":
+        return piece
+    if original.rstrip().endswith("."):
+        return f"{piece}."
+    return piece
 
 
 def _strip_markdown_noise(text: str) -> str:

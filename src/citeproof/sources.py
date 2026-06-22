@@ -38,7 +38,8 @@ def load_sources(source_dir: str | Path) -> list[Source]:
                     )
                 )
         elif path.suffix.lower() == PDF_SUFFIX:
-            text = _extract_pdf_text(path).strip()
+            pages = tuple(_extract_pdf_pages(path))
+            text = "\n\n".join(pages).strip()
             if text:
                 sources.append(
                     Source(
@@ -47,6 +48,7 @@ def load_sources(source_dir: str | Path) -> list[Source]:
                         title=path.stem,
                         text=text,
                         path=str(path),
+                        pages=pages,
                     )
                 )
         elif path.suffix.lower() == ".jsonl":
@@ -75,6 +77,7 @@ def align_sources_to_bibtex(sources: list[Source], title_by_key: dict[str, str])
                 title=title_by_key[key],
                 text=source.text,
                 path=source.path,
+                pages=source.pages,
             )
         )
     return aligned
@@ -85,16 +88,23 @@ def build_chunks(sources: list[Source]) -> list[SourceChunk]:
 
     chunks: list[SourceChunk] = []
     for source in sources:
-        for index, chunk in enumerate(chunk_text(source.text)):
-            chunks.append(
-                SourceChunk(
-                    source_id=source.source_id,
-                    citation_key=source.citation_key,
-                    title=source.title,
-                    text=chunk,
-                    chunk_id=f"{source.source_id}:{index}",
+        texts = (
+            [(page_number, page_text) for page_number, page_text in enumerate(source.pages, start=1)]
+            if source.pages
+            else [(None, source.text)]
+        )
+        for page_number, text in texts:
+            for index, chunk in enumerate(chunk_text(text)):
+                chunks.append(
+                    SourceChunk(
+                        source_id=source.source_id,
+                        citation_key=source.citation_key,
+                        title=source.title,
+                        text=chunk,
+                        chunk_id=_chunk_id(source.source_id, index, page_number),
+                        page=page_number,
+                    )
                 )
-            )
     return chunks
 
 
@@ -121,7 +131,7 @@ def _load_jsonl_sources(path: Path) -> list[Source]:
     return sources
 
 
-def _extract_pdf_text(path: Path) -> str:
+def _extract_pdf_pages(path: Path) -> list[str]:
     try:
         from pypdf import PdfReader
     except ImportError as exc:
@@ -129,11 +139,17 @@ def _extract_pdf_text(path: Path) -> str:
 
     reader = PdfReader(str(path))
     pages = []
-    for index, page in enumerate(reader.pages, start=1):
+    for page in reader.pages:
         text = page.extract_text() or ""
         if text.strip():
-            pages.append(f"Page {index}\n{text}")
-    return "\n\n".join(pages)
+            pages.append(text.strip())
+    return pages
+
+
+def _chunk_id(source_id: str, index: int, page_number: int | None) -> str:
+    if page_number is None:
+        return f"{source_id}:{index}"
+    return f"{source_id}:p{page_number}:{index}"
 
 
 def _best_title_key(

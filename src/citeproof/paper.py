@@ -7,10 +7,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from citeproof.bibliography import parse_bibtex, verify_bibliography
+from citeproof.entailment import judge_evidence
 from citeproof.models import Source
 from citeproof.parser import parse_claims
 from citeproof.sources import align_sources_to_bibtex, build_chunks, load_sources
-from citeproof.verifier import verify_claim
+from citeproof.verifier import Judge, verify_claim
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,7 @@ def verify_paper(
     tex_path: str | Path,
     bib_path: str | Path,
     source_dir: str | Path,
+    judge: Judge | None = None,
 ) -> PaperVerificationReport:
     """Verify a LaTeX draft against BibTeX metadata and local source files."""
 
@@ -37,7 +39,8 @@ def verify_paper(
     trusted_sources, loaded_count, mapped_count = load_bib_aligned_sources(bib_path, source_dir)
     chunks = build_chunks(trusted_sources)
     claims = parse_claims(Path(tex_path).read_text(encoding="utf-8"))
-    results = [verify_claim(claim, chunks) for claim in claims]
+    selected_judge = judge or judge_evidence
+    results = [verify_claim(claim, chunks, judge=selected_judge) for claim in claims]
     return PaperVerificationReport(
         bibliography=bibliography.to_dict(),
         claim_results=[result.to_dict() for result in results],

@@ -21,6 +21,19 @@ def test_parse_claims_keeps_only_cited_sentences() -> None:
     assert claims[0].citation_keys == ("smith2024",)
 
 
+def test_parse_claims_splits_explicit_citation_clauses() -> None:
+    claims = parse_claims(
+        "Method X improves turn taking \\cite{smith2024}; "
+        "Method Y reduces latency \\cite{jones2023}."
+    )
+
+    assert [claim.citation_keys for claim in claims] == [("smith2024",), ("jones2023",)]
+    assert [claim.text for claim in claims] == [
+        "Method X improves turn taking.",
+        "Method Y reduces latency.",
+    ]
+
+
 def test_parse_claims_drops_latex_tables_and_comments() -> None:
     draft = (
         "\\begin{comment} Hidden claim \\cite{hidden2024}. \\end{comment}\n"
