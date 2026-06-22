@@ -113,3 +113,11 @@ class EvidenceJudgment:
     label: Label
     confidence: float
     reason: str
+
+
+@dataclass(frozen=True)
+class FactInspection:
+    """Deterministic fact-lens result for one claim/evidence pair."""
+
+    label: Label | None
+    findings: tuple[str, ...] = ()
