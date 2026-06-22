@@ -69,7 +69,7 @@ def test_reduce_negation_is_not_supported() -> None:
 def test_detects_metric_negation_as_contradiction() -> None:
     judgment = judge_evidence(
         "Method X improves F1 score over the baseline.",
-        "Method X improves accuracy over the baseline but does not improve F1 score.",
+        "Method X improves accuracy over the baseline, with no F1 score improvement.",
     )
 
     assert judgment.label == Label.CONTRADICTED
