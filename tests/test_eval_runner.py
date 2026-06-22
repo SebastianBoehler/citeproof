@@ -134,6 +134,13 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
         "tail-count-statistical-conflict",
         "test-family-statistical-conflict",
         "no-overhead-strength-conflict",
+        "training-evaluation-role-conflict",
+        "evaluation-training-role-conflict",
+        "generation-audit-role-conflict",
+        "filter-stage-role-conflict",
+        "dataset-code-license-role-conflict",
+        "label-source-role-conflict",
+        "retrieval-source-role-conflict",
     } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)
