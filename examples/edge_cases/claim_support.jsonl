@@ -118,3 +118,5 @@
 {"id":"significance-numeric-ci-conflict","claim":"The treatment effect is statistically significant.","evidence":"The treatment effect 95% confidence interval was [-0.10, 0.30].","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"hazard-ratio-direction-conflict","claim":"The treatment hazard ratio is below 1.","evidence":"The treatment hazard ratio was 1.20.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
 {"id":"ratio-ci-null-conflict","claim":"The odds ratio excludes the null value.","evidence":"The odds ratio was 0.82 with 95% CI [0.60, 1.12].","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"patient-count-conflict","claim":"The study enrolled 100 patients.","evidence":"The study enrolled 120 patients.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"participant-count-conflict","claim":"The trial included 240 participants.","evidence":"The trial included 180 participants.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}

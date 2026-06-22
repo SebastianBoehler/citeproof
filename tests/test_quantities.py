@@ -58,6 +58,27 @@ def test_quantity_units_uses_head_unit_after_supported_modifier() -> None:
     assert quantities == {"turn": (Decimal("1000000"),)}
 
 
+def test_quantity_units_recognizes_academic_count_units() -> None:
+    quantities = quantity_units(
+        "The study enrolled 100 patients, 12 sites, and 4 treatment arms."
+    )
+
+    assert quantities == {
+        "patient": (Decimal("100"),),
+        "site": (Decimal("12"),),
+        "arm": (Decimal("4"),),
+    }
+
+
+def test_quantity_units_recognizes_participants_and_studies() -> None:
+    quantities = quantity_units("The meta-analysis included 240 participants and 12 studies.")
+
+    assert quantities == {
+        "participant": (Decimal("240"),),
+        "study": (Decimal("12"),),
+    }
+
+
 def test_quantity_units_normalizes_percent_units() -> None:
     quantities = quantity_units("Accuracy rose by 5 percent and recall rose by 7%.")
 

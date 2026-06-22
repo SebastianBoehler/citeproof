@@ -38,7 +38,9 @@ _WORD_NUMBER = (
     r"|one|two|three|four|five|six|seven|eight|nine|ten"
 )
 _WORD_UNIT = (
-    r"percent|examples?|samples?|gpus?|turns?|conversations?|dialogues?|domains?|languages?"
+    r"percent|arms?|centers?|centres?|cohorts?|conversations?|dialogues?|domains?|examples?|"
+    r"gpus?|groups?|languages?|participants?|patients?|samples?|sites?|studies|subjects?|"
+    r"trials?|turns?"
 )
 _STOPWORD_PATTERN = r"and|as|by|for|from|in|of|on|or|than|to|with|without"
 _BRIDGE_WORD = rf"(?!(?:{_STOPWORD_PATTERN})(?!-)\b)[A-Za-z][A-Za-z-]*"
@@ -149,6 +151,8 @@ def _normalize_unit(unit: str) -> str:
     normalized = unit.casefold()
     if normalized in {"%", "percent"}:
         return "%"
+    if normalized == "studies":
+        return "study"
     return normalized.rstrip("s")
 
 
