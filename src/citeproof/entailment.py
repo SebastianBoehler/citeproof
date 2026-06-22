@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from citeproof.causal_support import has_causal_design_support
 from citeproof.fact_lenses import compatible_bounded_quantity, inspect_facts
 from citeproof.models import EvidenceJudgment, Label
 from citeproof.quantities import quantity_mentions
@@ -199,6 +200,8 @@ def _has_semantic_support(claim: str, evidence: str, overlap: float) -> bool:
     claim_lower = claim.lower()
     evidence_lower = evidence.lower()
     if _has_resource_reduction_support(claim, evidence, overlap):
+        return True
+    if has_causal_design_support(claim, evidence, overlap):
         return True
     if (
         "bertscore" in claim_lower

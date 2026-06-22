@@ -48,3 +48,42 @@ def test_strength_tensions_block_full_support(claim: str, evidence: str) -> None
 
     assert judgment.label == Label.PARTIALLY_SUPPORTED
     assert judgment.failure_mode == FailureMode.SCOPE_OVERSTATEMENT
+
+
+def test_leads_to_correlation_blocks_full_support() -> None:
+    judgment = adjudicate_evidence(
+        "Higher temperature leads to increased failure rates.",
+        "Higher temperature correlated with increased failure rates in the logs.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+    assert judgment.failure_mode == FailureMode.SCOPE_OVERSTATEMENT
+
+
+def test_randomized_intervention_supports_matching_causal_claim() -> None:
+    judgment = adjudicate_evidence(
+        "The intervention caused test scores to improve.",
+        "The randomized intervention improved test scores relative to control.",
+    )
+
+    assert judgment.label == Label.SUPPORTED
+
+
+def test_intervention_without_design_signal_does_not_fully_support_causal_claim() -> None:
+    judgment = adjudicate_evidence(
+        "The intervention caused test scores to improve.",
+        "The intervention improved test scores in the pilot study.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+    assert judgment.failure_mode == FailureMode.SCOPE_OVERSTATEMENT
+
+
+def test_randomized_non_effect_does_not_support_causal_improvement() -> None:
+    judgment = adjudicate_evidence(
+        "The intervention caused test scores to improve.",
+        "The randomized intervention did not improve test scores relative to control.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+    assert judgment.failure_mode == FailureMode.NEGATION_CONFLICT

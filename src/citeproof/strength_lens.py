@@ -36,11 +36,17 @@ WEAK_OVERHEAD_RE = re.compile(
     re.IGNORECASE,
 )
 CAUSAL_CLAIM_RE = re.compile(
-    r"\b(?P<value>causes|caused|causal|causally|proves|demonstrates)\b",
+    r"\b(?P<value>"
+    r"causes|caused|causal|causally|proves|demonstrates|"
+    r"leads?\s+to|led\s+to|results?\s+in|resulted\s+in|drives?|drove"
+    r")\b",
     re.IGNORECASE,
 )
 WEAK_CAUSAL_RE = re.compile(
-    r"\b(?P<value>associations?|associated|correlations?|correlated|suggests?|suggested|may)\b",
+    r"\b(?P<value>"
+    r"associations?|associated|correlations?|correlated|suggests?|suggested|may|"
+    r"observational|cross[- ]sectional|retrospective|non[- ]?randomi[sz]ed"
+    r")\b",
     re.IGNORECASE,
 )
 RANKING_CLAIM_RE = re.compile(
@@ -57,8 +63,10 @@ PARTIAL_RE = re.compile(r"\b(?P<value>partial|partially)\b", re.IGNORECASE)
 TRIGGER_WORDS_RE = re.compile(
     r"\b("
     r"associations?|associated|best|causal|causally|caused|causes|comparable|"
-    r"competitive|complete|completely|correlations?|correlated|demonstrates|full|fully|"
-    r"highest|large|may|modest|no|nonzero|overheads?|partial|partially|proves|"
+    r"competitive|complete|completely|correlations?|correlated|cross|demonstrates|"
+    r"drives?|drove|full|fully|highest|large|led|leads?|may|modest|no|non|"
+    r"nonzero|observational|overheads?|partial|partially|proves|randomi[sz]ed|"
+    r"results?|resulted|retrospective|sectional|"
     r"recover(?:y|ies|s|ed)?|reconstruct(?:ion|s|ed)?|restor(?:ation|es|ed)?|small|"
     r"some|substantial|suggested|suggests?|top|performing|zero"
     r")\b",

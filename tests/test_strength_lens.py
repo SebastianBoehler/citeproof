@@ -72,6 +72,25 @@ def test_detects_causal_tension_word_forms(claim: str, evidence: str) -> None:
     assert any("Causal overstatement" in finding for finding in findings)
 
 
+@pytest.mark.parametrize(
+    ("claim", "evidence"),
+    [
+        (
+            "Higher temperature leads to increased failure rates.",
+            "Higher temperature is correlated with increased failure rates.",
+        ),
+        (
+            "The policy resulted in lower dropout rates.",
+            "The policy was studied in an observational cohort with lower dropout rates.",
+        ),
+    ],
+)
+def test_detects_broader_causal_overstatement_forms(claim: str, evidence: str) -> None:
+    findings = inspect_strength_tensions(claim, evidence)
+
+    assert any("Causal overstatement" in finding for finding in findings)
+
+
 def test_detects_best_competitive_tension() -> None:
     findings = inspect_strength_tensions(
         "The method achieves the best accuracy.",
