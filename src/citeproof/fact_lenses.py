@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from citeproof.attribute_lens import inspect_attribute_conflicts
 from citeproof.comparison_lens import inspect_comparison_direction
 from citeproof.models import FactInspection, Label
 from citeproof.negation_lens import (
@@ -74,6 +75,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + _year_conflicts(claim, evidence)
         + negation_findings
         + list(inspect_qualitative_conflicts(claim, evidence))
+        + list(inspect_attribute_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)

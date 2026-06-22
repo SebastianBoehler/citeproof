@@ -11,6 +11,14 @@ from citeproof.models import Claim, EvidenceJudgment, FactInspection, FailureMod
 
 Judge = Callable[[str, str], EvidenceJudgment]
 
+ATTRIBUTE_ENTITY_CONFLICTS = (
+    "modality conflict",
+    "task conflict",
+    "split conflict",
+    "language conflict",
+    "optimizer conflict",
+)
+
 
 def adjudicate_evidence(
     claim: str,
@@ -98,6 +106,10 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
     if "negation conflict" in text or "direction conflict" in text:
         return FailureMode.NEGATION_CONFLICT
     if "entity conflict" in text:
+        return FailureMode.ENTITY_CONFLICT
+    if "availability conflict" in text:
+        return FailureMode.NEGATION_CONFLICT
+    if any(conflict in text for conflict in ATTRIBUTE_ENTITY_CONFLICTS):
         return FailureMode.ENTITY_CONFLICT
     return FailureMode.CONFLICTING_SOURCES
 
