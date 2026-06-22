@@ -259,6 +259,9 @@ def _review_action(mode: FailureMode | None) -> str:
         FailureMode.UNIT_CONFLICT: "fix the unit or cite a matching source",
         FailureMode.ENTITY_CONFLICT: "fix the entity or cite a matching source",
         FailureMode.NEGATION_CONFLICT: "fix the result polarity or cite a matching source",
+        FailureMode.COMPARISON_DIRECTION_CONFLICT: (
+            "fix the comparison direction or cite a matching source"
+        ),
         FailureMode.HEDGED_EVIDENCE: "hedge the claim or cite stronger evidence",
         FailureMode.SCOPE_OVERSTATEMENT: "narrow the claim scope",
         FailureMode.SOURCE_SILENCE: "cite a source that states the claim or revise the claim",
