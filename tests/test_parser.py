@@ -137,3 +137,22 @@ def test_parse_claims_drops_latex_tables_and_comments() -> None:
     claims = parse_claims(draft)
 
     assert [claim.citation_keys for claim in claims] == [("real2024",)]
+
+
+def test_parse_claims_drops_latex_preamble() -> None:
+    draft = (
+        "\\documentclass{article}\n"
+        "\\title{Demo Paper}\n"
+        "\\author{Demo Author}\n"
+        "\\begin{document}\n"
+        "\\maketitle\n"
+        "\\section{Intro}\n"
+        "Adaptive replay improves sample efficiency \\cite{jones2023adaptive}.\n"
+        "\\end{document}\n"
+    )
+
+    claims = parse_claims(draft)
+
+    assert claims == [
+        Claim("Adaptive replay improves sample efficiency.", ("jones2023adaptive",))
+    ]

@@ -28,6 +28,7 @@ def test_results_to_html_contains_interactive_claim_data() -> None:
     assert "smith2024" in html
     assert "Paper Text Overlay" in html
     assert "Evidence Snippets" in html
+    assert "documentHtml" in html
 
 
 def test_paper_report_to_html_contains_mapping_summary() -> None:

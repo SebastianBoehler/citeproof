@@ -59,6 +59,7 @@ def write_reports(
     json_output: str | Path | None,
     markdown_output: str | Path | None,
     html_output: str | Path | None = None,
+    source_text: str | None = None,
 ) -> None:
     """Write requested report files."""
 
@@ -73,4 +74,4 @@ def write_reports(
     if html_output:
         path = Path(html_output)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(results_to_html(results), encoding="utf-8")
+        path.write_text(results_to_html(results, source_text=source_text), encoding="utf-8")

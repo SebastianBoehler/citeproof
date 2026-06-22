@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from citeproof.entailment import judge_evidence
 from citeproof.evals.runner import run_eval_cases, run_eval_file
@@ -27,7 +28,14 @@ def main(argv: list[str] | None = None) -> int:
 
 def _run_verify(args: argparse.Namespace) -> int:
     results = verify_draft(args.draft, args.sources, judge=_make_judge(args))
-    write_reports(results, args.json_output, args.markdown_output, args.html_output)
+    source_text = Path(args.draft).read_text(encoding="utf-8") if args.html_output else None
+    write_reports(
+        results,
+        args.json_output,
+        args.markdown_output,
+        args.html_output,
+        source_text=source_text,
+    )
     if args.format == "markdown":
         print(results_to_markdown(results))
     else:
@@ -105,7 +113,10 @@ def _run_verify_paper(args: argparse.Namespace) -> int:
     if args.markdown_output:
         _write_text(args.markdown_output, render_paper_report(report))
     if args.html_output:
-        _write_text(args.html_output, paper_report_to_html(report))
+        _write_text(
+            args.html_output,
+            paper_report_to_html(report, source_text=Path(args.tex).read_text(encoding="utf-8")),
+        )
     print(report.to_json() if args.format == "json" else render_paper_report(report))
     return _paper_exit_code(report)
 

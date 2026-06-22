@@ -7,19 +7,24 @@ from collections import Counter
 from html import escape
 from typing import Any
 
+from citeproof.document_render import render_audit_document
 from citeproof.models import VerificationResult
 
 
-def results_to_html(results: list[VerificationResult]) -> str:
+def results_to_html(
+    results: list[VerificationResult],
+    source_text: str | None = None,
+) -> str:
     """Render claim verification results as a self-contained HTML dashboard."""
 
     return claim_results_to_html(
         [result.to_dict() for result in results],
         title="CiteProof Audit Dashboard",
+        source_text=source_text,
     )
 
 
-def paper_report_to_html(report: Any) -> str:
+def paper_report_to_html(report: Any, source_text: str | None = None) -> str:
     """Render a whole-paper verification report as a self-contained HTML dashboard."""
 
     bibliography = report.bibliography
@@ -33,6 +38,7 @@ def paper_report_to_html(report: Any) -> str:
         report.claim_results,
         title="CiteProof Paper Audit",
         summary=summary,
+        source_text=source_text,
     )
 
 
@@ -40,6 +46,7 @@ def claim_results_to_html(
     claim_results: list[dict[str, Any]],
     title: str,
     summary: dict[str, int] | None = None,
+    source_text: str | None = None,
 ) -> str:
     """Render serialized claim results as an inspectable local dashboard."""
 
@@ -49,6 +56,7 @@ def claim_results_to_html(
         "summary": summary or {},
         "counts": dict(counts),
         "results": claim_results,
+        "documentHtml": render_audit_document(source_text, claim_results),
     }
     data = json.dumps(payload, sort_keys=True).replace("</", "<\\/")
     return f"""<!doctype html>
@@ -124,9 +132,15 @@ h1 {{ margin: 0 0 6px; font-size: 25px; line-height: 1.2; }}
   box-shadow: 0 18px 48px rgba(16, 24, 40, 0.08);
 }}
 .paper-title {{ margin: 0 0 22px; font-size: 15px; color: var(--muted); text-transform: uppercase; }}
-.claim {{
-  position: relative;
+.doc-heading {{ margin: 28px 0 12px; font-size: 24px; line-height: 1.25; }}
+.doc-paragraph {{
   margin: 0 0 18px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1.72;
+}}
+.annotated {{
+  position: relative;
   padding: 12px 12px 12px 16px;
   border: 1px solid transparent;
   border-left-width: 4px;
@@ -134,14 +148,17 @@ h1 {{ margin: 0 0 6px; font-size: 25px; line-height: 1.2; }}
   background: #fbfcff;
   cursor: pointer;
 }}
-.claim.active {{ border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12); }}
+.annotated.active {{ border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12); }}
+.claim-span.annotated {{ display: inline; position: static; border: 0; border-radius: 5px; padding: 2px 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }}
 .status-supported {{ border-left-color: var(--supported); background: #f3fbf7; }}
 .status-partially_supported {{ border-left-color: var(--partial); background: #fff8eb; }}
 .status-contradicted {{ border-left-color: var(--bad); background: #fff5f4; }}
 .status-unsupported, .status-uncertain {{ border-left-color: var(--unknown); background: #f8fafc; }}
-.claim-text {{ margin: 9px 0 10px; font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.68; }}
 .claim-top, .claim-bottom {{ display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }}
 .line {{ color: var(--muted); font-size: 12px; }}
+.inline-cite {{ transform: translateY(-1px); }}
+.annotation-badges {{ display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }}
+.mini-badge {{ border: 0; cursor: pointer; min-height: 21px; padding: 4px 7px; }}
 .inspector {{
   position: sticky;
   top: 0;
@@ -232,21 +249,16 @@ function renderFilters() {{
   }}));
 }}
 function renderPaper() {{
-  const items = visibleItems();
-  document.getElementById("paper").innerHTML = items.map(({{ result, index }}) => {{
-    const citations = (result.citations || []).map((key) =>
-      `<button class="cite" data-index="${{index}}" title="Inspect citation ${{esc(key)}}">${{esc(key)}}</button>`
-    ).join("");
-    return `<article class="claim status-${{labelClass(result.label)}} ${{active === index ? "active" : ""}}" data-claim="${{index}}">
-      <div class="claim-top"><span class="line">claim ${{index + 1}}</span><span class="badge ${{labelClass(result.label)}}">${{esc(result.label)}}</span></div>
-      <p class="claim-text">${{esc(result.claim)}}</p>
-      <div class="claim-bottom">${{citations || '<span class="stat">no citations</span>'}}<span class="stat">confidence ${{Number(result.confidence || 0).toFixed(3)}}</span></div>
-    </article>`;
-  }}).join("") || '<p>No claims match this filter.</p>';
-  document.querySelectorAll(".claim, .cite").forEach((node) => node.addEventListener("click", (event) => {{
+  document.getElementById("paper").innerHTML = payload.documentHtml || '<p>No paper text available.</p>';
+  document.querySelectorAll(".annotated, .cite, .mini-badge").forEach((node) => node.addEventListener("click", (event) => {{
     event.stopPropagation();
     select(Number(node.dataset.claim ?? node.dataset.index));
   }}));
+  document.querySelectorAll(".annotated").forEach((node) => {{
+    const index = Number(node.dataset.claim);
+    node.hidden = filter !== "all" && payload.results[index]?.label !== filter;
+    node.classList.toggle("active", index === active);
+  }});
 }}
 function renderInspector() {{
   const result = payload.results[active] || payload.results[0];

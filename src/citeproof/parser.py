@@ -126,6 +126,11 @@ def _prepare_draft_text(text: str) -> str:
     for environment in LATEX_ENVIRONMENTS_TO_DROP:
         text = _drop_latex_environment(text, environment)
     text = _unwrap_latex_text_commands(text)
+    text = re.sub(r"\\documentclass(?:\[[^\]]*\])?\{[^}]+\}", " ", text)
+    text = re.sub(r"\\usepackage(?:\[[^\]]*\])?\{[^}]+\}", " ", text)
+    text = re.sub(r"\\(?:begin|end)\{document\}", " ", text)
+    text = re.sub(r"\\(?:title|author|date|bibliography|bibliographystyle)\{[^}]*\}", " ", text)
+    text = re.sub(r"\\maketitle\b", " ", text)
     text = re.sub(r"\\(?:section|subsection|subsubsection|caption|label|ref)\*?\{[^}]*\}", " ", text)
     text = re.sub(r"\\(?!cite)[A-Za-z]+\*?(?:\[[^\]]*\])?", " ", text)
     text = re.sub(r"\s+", " ", text)
