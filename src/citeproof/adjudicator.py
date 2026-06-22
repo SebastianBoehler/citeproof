@@ -104,7 +104,7 @@ def _heuristic_failure_mode(judgment: EvidenceJudgment) -> FailureMode:
         return FailureMode.CONFLICTING_SOURCES
     if judgment.label == Label.PARTIALLY_SUPPORTED:
         return FailureMode.SCOPE_OVERSTATEMENT
-    return FailureMode.NO_RATIONALE_SPAN
+    return FailureMode.SOURCE_SILENCE
 
 
 def combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgment:
@@ -143,18 +143,23 @@ def combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgmen
         )
         return _with_failure_mode(strongest, FailureMode.SCOPE_OVERSTATEMENT)
     if Label.UNCERTAIN in labels:
-        return EvidenceJudgment(
-            Label.UNCERTAIN,
-            0.45,
-            "Atomic subclaims could not be verified.",
-            FailureMode.NO_RATIONALE_SPAN,
+        strongest = max(
+            (judgment for judgment in judgments if judgment.label == Label.UNCERTAIN),
+            key=lambda judgment: judgment.confidence,
         )
-    return EvidenceJudgment(
-        Label.UNSUPPORTED,
-        0.35,
-        "No atomic subclaim is supported.",
-        FailureMode.MISSING_ATOM_SUPPORT,
+        return _with_failure_mode(strongest, FailureMode.SOURCE_SILENCE)
+    strongest = max(
+        (judgment for judgment in judgments if judgment.label == Label.UNSUPPORTED),
+        key=lambda judgment: judgment.confidence,
     )
+    if strongest.failure_mode == FailureMode.NO_RATIONALE_SPAN:
+        return EvidenceJudgment(
+            Label.UNSUPPORTED,
+            strongest.confidence,
+            "No atomic subclaim is supported.",
+            strongest.failure_mode,
+        )
+    return _with_failure_mode(strongest, FailureMode.SOURCE_SILENCE)
 
 
 _combine_atom_judgments = combine_atom_judgments

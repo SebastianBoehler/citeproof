@@ -12,6 +12,7 @@ from citeproof.models import (
     AtomVerification,
     Claim,
     ClaimVerificationTrace,
+    EvidenceCandidate,
     EvidenceJudgment,
     FailureMode,
     Label,
@@ -144,7 +145,7 @@ def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list
     group = atomize_claim(claim)
     for atom in group.atoms:
         atom_claim = Claim(atom.text, atom.citation_keys)
-        candidates = select_rationales(atom_claim, chunks, limit=1)
+        candidates = select_rationales(atom_claim, chunks, limit=3)
         if not candidates:
             verifications.append(
                 AtomVerification(
@@ -158,15 +159,21 @@ def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list
                 )
             )
             continue
-        top = candidates[0]
-        judgment = adjudicate_evidence(atom.text, top.text, judge=judge)
-        rationale = RationaleSpan(
-            source_id=top.source_id,
-            citation_key=top.citation_key,
-            text=top.text,
-            page=top.page,
-            relation=_relation_for(judgment.label),
-            score=top.lexical_score,
+        judged_candidates = tuple(
+            (candidate, adjudicate_evidence(atom.text, candidate.text, judge=judge))
+            for candidate in candidates
+        )
+        judgment = _choose_candidate_judgment(judged_candidates)[1]
+        rationales = tuple(
+            RationaleSpan(
+                source_id=candidate.source_id,
+                citation_key=candidate.citation_key,
+                text=candidate.text,
+                page=candidate.page,
+                relation=_relation_for(candidate_judgment.label),
+                score=candidate.lexical_score,
+            )
+            for candidate, candidate_judgment in judged_candidates
         )
         verifications.append(
             AtomVerification(
@@ -174,12 +181,25 @@ def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list
                 context=atom.context,
                 label=judgment.label,
                 confidence=round(judgment.confidence, 3),
-                rationales=(rationale,),
+                rationales=rationales,
                 failure_mode=judgment.failure_mode,
                 reason=judgment.reason,
             )
         )
     return verifications
+
+
+def _choose_candidate_judgment(
+    judgments: tuple[tuple[EvidenceCandidate, EvidenceJudgment], ...],
+) -> tuple[EvidenceCandidate, EvidenceJudgment]:
+    priority = {
+        Label.CONTRADICTED: 4,
+        Label.SUPPORTED: 3,
+        Label.PARTIALLY_SUPPORTED: 2,
+        Label.UNCERTAIN: 1,
+        Label.UNSUPPORTED: 0,
+    }
+    return max(judgments, key=lambda item: (priority[item[1].label], item[1].confidence))
 
 
 def _relation_for(label: Label) -> str:
@@ -202,8 +222,11 @@ def _review_action(mode: FailureMode | None) -> str:
         FailureMode.MISSING_ATOM_SUPPORT: "rewrite unsupported atom or add a better citation",
         FailureMode.NUMERIC_CONFLICT: "fix the numeric value or cite a matching source",
         FailureMode.YEAR_CONFLICT: "fix the year or cite a matching source",
+        FailureMode.UNIT_CONFLICT: "fix the unit or cite a matching source",
+        FailureMode.NEGATION_CONFLICT: "fix the result polarity or cite a matching source",
         FailureMode.HEDGED_EVIDENCE: "hedge the claim or cite stronger evidence",
         FailureMode.SCOPE_OVERSTATEMENT: "narrow the claim scope",
+        FailureMode.SOURCE_SILENCE: "cite a source that states the claim or revise the claim",
         FailureMode.MODEL_DISAGREEMENT: "manually inspect model disagreement",
     }
     return actions.get(mode, "manually inspect cited evidence")

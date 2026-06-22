@@ -32,7 +32,7 @@ failure-mode classification, and bibliography-gated hallucination checks.
 - `unsupported_recall`: share of unsupported expected cases correctly rejected.
 - `contradiction_recall`: share of contradicted expected cases caught as `contradicted`.
 - `manual_review_rate`: share of predictions returned as `partially_supported` or `uncertain`.
-- Per-case reports include `id`, `expected_label`, `predicted_label`,
+- Direct `eval` per-case reports include `id`, `expected_label`, `predicted_label`,
   `confidence`, `false_supported`, `pass`, `reason`, and `failure_mode` when
   the verifier can assign a stable failure category.
 

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from citeproof.models import FailureMode, Label
+from citeproof.models import Claim, FailureMode, Label, SourceChunk
 from citeproof.report import results_to_markdown
-from citeproof.verifier import verify_claim_text, verify_draft
+from citeproof.verifier import verify_claim, verify_claim_text, verify_draft
 
 
 def test_verify_claim_detects_contradiction(tmp_path: Path) -> None:
@@ -23,6 +23,37 @@ def test_verify_claim_detects_contradiction(tmp_path: Path) -> None:
     assert result.trace is not None
     assert result.trace.review_action != "none"
     assert result.trace.final_failure_mode is not None
+
+
+def test_verify_claim_does_not_allow_support_to_hide_contradiction() -> None:
+    chunks = [
+        SourceChunk(
+            source_id="paper",
+            citation_key="smith2024",
+            chunk_id="support",
+            text="Method X improves accuracy.",
+        ),
+        SourceChunk(
+            source_id="paper",
+            citation_key="smith2024",
+            chunk_id="contradiction",
+            text="Method X does not improve accuracy.",
+        ),
+    ]
+
+    result = verify_claim(
+        Claim("Method X improves accuracy.", ("smith2024",)),
+        chunks,
+        evidence_limit=2,
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert result.failure_mode == FailureMode.NEGATION_CONFLICT
+    assert result.trace is not None
+    assert result.trace.review_action == "fix the result polarity or cite a matching source"
+    rationales = result.trace.atom_verifications[0].rationales
+    assert any(rationale.relation == "contradict" for rationale in rationales)
+    assert any("does not improve accuracy" in rationale.text for rationale in rationales)
 
 
 def test_verify_draft_marks_missing_source_uncertain(tmp_path: Path) -> None:
