@@ -64,10 +64,37 @@ def test_detects_test_family_conflict() -> None:
     assert any("Test family conflict" in finding for finding in findings)
 
 
+def test_detects_hyphenated_test_family_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The method uses a parametric test.",
+        "The method uses a non-parametric test.",
+    )
+
+    assert any("Test family conflict" in finding for finding in findings)
+
+
+def test_detects_spaced_test_family_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The method uses a parametric test.",
+        "The method uses a non parametric test.",
+    )
+
+    assert any("Test family conflict" in finding for finding in findings)
+
+
 def test_ignores_evidence_with_claim_value_plus_extra_value() -> None:
     findings = inspect_statistical_conflicts(
         "The paper reports median latency.",
         "The paper reports median latency and mean latency.",
+    )
+
+    assert findings == ()
+
+
+def test_ignores_f1_averaging_in_different_cohorts() -> None:
+    findings = inspect_statistical_conflicts(
+        "Macro-F1 improves for cohort A.",
+        "Micro-F1 improves for cohort B.",
     )
 
     assert findings == ()

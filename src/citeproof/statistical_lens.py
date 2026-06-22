@@ -5,7 +5,31 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from citeproof.text import tokenize
+CONTEXT_STOPWORDS = {
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "for",
+    "from",
+    "in",
+    "is",
+    "it",
+    "of",
+    "on",
+    "or",
+    "that",
+    "the",
+    "their",
+    "this",
+    "to",
+    "was",
+    "were",
+    "with",
+}
 
 
 @dataclass(frozen=True)
@@ -100,6 +124,8 @@ def _mentioned_values(group: StatisticalGroup, text: str) -> tuple[str, ...]:
     for value, patterns in group.values:
         if any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns):
             values.append(value)
+    if group.label == "Test family" and "nonparametric" in values:
+        values = [value for value in values if value != "parametric"]
     return tuple(values)
 
 
@@ -112,4 +138,5 @@ def _context_overlaps(claim: str, evidence: str) -> bool:
 
 
 def _context_tokens(text: str) -> set[str]:
-    return set(tokenize(VALUE_TERMS_RE.sub(" ", text)))
+    terms = re.findall(r"[a-z0-9]+", VALUE_TERMS_RE.sub(" ", text).lower())
+    return {term for term in terms if term not in CONTEXT_STOPWORDS}
