@@ -38,6 +38,8 @@ claim support is checked against local paper text.
 uv sync --extra dev
 uv run citeproof verify examples/draft.md --sources examples/sources
 uv run citeproof eval examples/claim_support.jsonl
+uv run citeproof eval examples/edge_cases/claim_support.jsonl \
+  --details-output reports/edge_cases_heuristic.json
 uv run citeproof eval-draft examples/hallucination/draft.md \
   --sources examples/hallucination/sources \
   --bib examples/hallucination/references.bib \
@@ -79,15 +81,21 @@ uv run citeproof verify-metadata --bib path/to/references.bib \
   --json-output reports/metadata.json
 ```
 
-Run the optional transformer NLI verifier:
+Run the optional local transformers NLI verifier. By default this uses
+`cross-encoder/nli-deberta-v3-small`, the same NLI model family used in
+`token-uncertainty-verifier`; it does not call the Hugging Face Space API.
 
 ```bash
 uv sync --extra nli
+CITEPROOF_DEVICE=cpu \
 uv run citeproof verify-paper path/to/paper.tex \
   --bib path/to/references.bib \
   --sources path/to/papers \
   --verifier nli
 ```
+
+Override the local NLI model with `--nli-model` or `NLI_MODEL_ID`. Override
+device selection with `CITEPROOF_DEVICE=cpu|cuda|mps`.
 
 Generate HALLMARK prediction JSONL for bibliography hallucination scoring:
 

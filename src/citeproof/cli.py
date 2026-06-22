@@ -7,7 +7,7 @@ import json
 import sys
 
 from citeproof.entailment import judge_evidence
-from citeproof.evals.runner import run_eval_file
+from citeproof.evals.runner import run_eval_cases, run_eval_file
 from citeproof.evals.draft import run_draft_eval
 from citeproof.paper import render_paper_report, verify_paper
 from citeproof.report import results_to_json, results_to_markdown, write_reports
@@ -41,7 +41,19 @@ def _run_verify_claim(args: argparse.Namespace) -> int:
 
 
 def _run_eval(args: argparse.Namespace) -> int:
-    summary = run_eval_file(args.dataset)
+    judge = _make_judge(args)
+    if args.details_output:
+        from citeproof.evals.metrics import summarize
+        from citeproof.models import Label
+
+        cases = run_eval_cases(args.dataset, judge=judge)
+        summary = summarize(
+            [Label(case["expected_label"]) for case in cases],
+            [Label(case["predicted_label"]) for case in cases],
+        )
+        _write_text(args.details_output, json.dumps(cases, indent=2, sort_keys=True))
+    else:
+        summary = run_eval_file(args.dataset, judge=judge)
     print(summary.to_json())
     return 0
 
@@ -173,6 +185,8 @@ def _build_parser() -> argparse.ArgumentParser:
 
     eval_parser = subparsers.add_parser("eval", help="Run a claim-support eval JSONL file.")
     eval_parser.add_argument("dataset")
+    eval_parser.add_argument("--details-output")
+    _add_verifier_args(eval_parser)
     eval_parser.set_defaults(func=_run_eval)
 
     eval_draft = subparsers.add_parser("eval-draft", help="Evaluate draft labels against JSONL.")

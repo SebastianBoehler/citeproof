@@ -1,0 +1,10 @@
+{"id":"paraphrase-support","claim":"Method X reduces training time.","evidence":"Training with Method X required half as many hours as the baseline.","expected_label":"supported"}
+{"id":"single-number-conflict","claim":"The method improves success by 42 percent.","evidence":"The method improves success by 12 percent.","expected_label":"contradicted"}
+{"id":"multi-number-conflict","claim":"The model was trained on 6000 examples with 4 GPUs.","evidence":"The model was trained on 6000 examples with 1 GPU.","expected_label":"contradicted"}
+{"id":"scope-overstatement","claim":"All evaluated models generalize to unseen domains.","evidence":"Only two evaluated models generalized to the unseen hotel domain.","expected_label":"partially_supported"}
+{"id":"semantic-metric-paraphrase","claim":"BERTScore captures semantic similarity beyond exact lexical overlap.","evidence":"BERTScore computes token-level contextual embedding similarity rather than n-gram matching.","expected_label":"supported"}
+{"id":"wrong-source-silence","claim":"Schema-Guided Dialogue contains over 16k task-oriented dialogues.","evidence":"WildChat contains 1M ChatGPT interaction logs in the wild.","expected_label":"unsupported"}
+{"id":"negation-contradiction","claim":"The method does not improve accuracy.","evidence":"The method significantly improves accuracy over the baseline.","expected_label":"contradicted"}
+{"id":"temporal-conflict","claim":"Qwen2.5 Technical Report was published in 2025.","evidence":"Qwen2.5 Technical Report was released in 2024.","expected_label":"contradicted"}
+{"id":"hedged-evidence","claim":"The adapter improves transfer to unseen domains.","evidence":"The adapter may improve transfer to unseen domains, but the study was inconclusive.","expected_label":"partially_supported"}
+{"id":"entity-swap","claim":"LoRA freezes pretrained weights and trains rank-decomposition matrices.","evidence":"QLoRA quantizes pretrained weights to 4-bit precision and trains LoRA adapters.","expected_label":"partially_supported"}

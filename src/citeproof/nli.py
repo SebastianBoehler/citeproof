@@ -2,24 +2,26 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import os
 from typing import Any
 
 from citeproof.models import EvidenceJudgment, Label
 
-DEFAULT_NLI_MODEL = "facebook/bart-large-mnli"
+DEFAULT_NLI_MODEL = os.getenv("NLI_MODEL_ID", "cross-encoder/nli-deberta-v3-small")
 
 
 class TransformersNliJudge:
-    """Judge evidence-claim pairs with a Hugging Face NLI model."""
+    """Judge evidence-claim pairs with a local transformers NLI model."""
 
     def __init__(self, model_name: str = DEFAULT_NLI_MODEL, min_confidence: float = 0.55) -> None:
         self.model_name = model_name
         self.min_confidence = min_confidence
-        self._classifier: Any | None = None
+        self._tokenizer: Any | None = None
+        self._model: Any | None = None
+        self._labels: dict[int, str] | None = None
 
     def __call__(self, claim: str, evidence: str) -> EvidenceJudgment:
-        scores = _scores_by_kind(self._run(evidence, claim))
+        scores = self._score_pair(evidence, claim)
         if not scores:
             return EvidenceJudgment(Label.UNCERTAIN, 0.2, "NLI model returned no usable labels.")
 
@@ -41,20 +43,36 @@ class TransformersNliJudge:
             )
         return EvidenceJudgment(Label.UNSUPPORTED, confidence, "NLI model predicts neutral evidence.")
 
-    def _run(self, evidence: str, claim: str) -> Any:
-        return self._pipeline()({"text": evidence, "text_pair": claim}, truncation=True)
+    def _score_pair(self, evidence: str, claim: str) -> dict[str, float]:
+        try:
+            import torch
+        except ImportError as exc:
+            raise RuntimeError(
+                "NLI verification requires the optional dependency group: uv sync --extra nli"
+            ) from exc
 
-    def _pipeline(self) -> Any:
-        if self._classifier is None:
+        tokenizer, model, labels = self._load_model()
+        batch = tokenizer(evidence, claim, return_tensors="pt", truncation=True, max_length=512)
+        device = next(model.parameters()).device
+        batch = {key: value.to(device) for key, value in batch.items()}
+        with torch.inference_mode():
+            probabilities = torch.softmax(model(**batch).logits[0], dim=-1).tolist()
+        return {_label_kind(labels[index]): float(probabilities[index]) for index in labels}
+
+    def _load_model(self) -> tuple[Any, Any, dict[int, str]]:
+        if self._tokenizer is None or self._model is None or self._labels is None:
             try:
-                from transformers import pipeline
+                from transformers import AutoModelForSequenceClassification, AutoTokenizer
             except ImportError as exc:
                 raise RuntimeError(
-                    "NLI verification requires the optional dependency group: "
-                    "uv sync --extra nli"
+                    "NLI verification requires the optional dependency group: uv sync --extra nli"
                 ) from exc
-            self._classifier = pipeline("text-classification", model=self.model_name, top_k=None)
-        return self._classifier
+            self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self._model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
+            self._labels = clean_label_map(self._model.config.id2label)
+            self._model.to(_preferred_device())
+            self._model.eval()
+        return self._tokenizer, self._model, self._labels
 
 
 def build_nli_judge(model_name: str | None = None) -> TransformersNliJudge:
@@ -63,33 +81,37 @@ def build_nli_judge(model_name: str | None = None) -> TransformersNliJudge:
     return TransformersNliJudge(model_name or DEFAULT_NLI_MODEL)
 
 
-def _scores_by_kind(output: Any) -> dict[str, float]:
-    rows = _flatten_output(output)
-    scores: dict[str, float] = {}
-    for row in rows:
-        label = str(row.get("label", "")).lower()
-        kind = _label_kind(label)
-        if kind is None:
-            continue
-        scores[kind] = max(scores.get(kind, 0.0), float(row.get("score", 0.0)))
-    return scores
+def clean_label_map(labels: dict[int, str]) -> dict[int, str]:
+    """Normalize and validate NLI label names."""
+
+    normalized = {key: _label_kind(value) for key, value in labels.items()}
+    expected = {"contradiction", "entailment", "neutral"}
+    if expected - set(normalized.values()):
+        raise ValueError(f"NLI model labels must include {sorted(expected)}.")
+    return normalized
 
 
-def _flatten_output(output: Any) -> list[dict[str, Any]]:
-    if isinstance(output, dict):
-        return [output]
-    if isinstance(output, Sequence) and not isinstance(output, (str, bytes)):
-        if output and isinstance(output[0], Sequence) and not isinstance(output[0], dict):
-            return [item for group in output for item in group]
-        return [item for item in output if isinstance(item, dict)]
-    return []
-
-
-def _label_kind(label: str) -> str | None:
+def _label_kind(label: str) -> str:
+    label = label.lower()
     if "entail" in label:
         return "entailment"
     if "contrad" in label:
         return "contradiction"
     if "neutral" in label:
         return "neutral"
-    return None
+    return label
+
+
+def _preferred_device() -> str:
+    override = os.getenv("CITEPROOF_DEVICE") or os.getenv("TOKEN_UV_DEVICE")
+    if override in {"cpu", "cuda", "mps"}:
+        return override
+    try:
+        import torch
+    except ImportError:
+        return "cpu"
+    if torch.cuda.is_available():
+        return "cuda"
+    if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
