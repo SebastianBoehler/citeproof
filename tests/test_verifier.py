@@ -62,7 +62,7 @@ def test_verify_claim_flags_material_anchor_conflict() -> None:
             source_id="paper",
             citation_key="smith2024",
             chunk_id="swap",
-            text="Prefix tuning improves accuracy over full fine-tuning on GLUE.",
+            text="Prefix Tuning improves accuracy over full fine-tuning on GLUE.",
         )
     ]
 

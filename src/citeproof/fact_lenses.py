@@ -19,7 +19,8 @@ MATERIAL_ANCHOR_RE = re.compile(
 )
 MATERIAL_ANCHOR_PHRASE_RE = re.compile(
     r"\b[A-Z][a-z]+\s+"
-    r"(?:adapter|adaptation|fine-tuning|learning|method|model|network|replay|retrieval|training|tuning)\b"
+    r"(?:[Aa]dapter|[Aa]daptation|[Ff]ine-[Tt]uning|[Ll]earning|[Mm]ethod|[Mm]odel|"
+    r"[Nn]etwork|[Rr]eplay|[Rr]etrieval|[Tt]raining|[Tt]uning)\b"
 )
 YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 HEDGE_RE = re.compile(r"\b(may|might|could|inconclusive|suggests|preliminary)\b", re.IGNORECASE)

@@ -62,13 +62,13 @@ def test_detects_scope_gap_partial_support() -> None:
 def test_detects_missing_material_anchor() -> None:
     result = inspect_facts(
         "LoRA improves accuracy over full fine-tuning on GLUE.",
-        "Prefix tuning improves accuracy over full fine-tuning on GLUE.",
+        "Prefix Tuning improves accuracy over full fine-tuning on GLUE.",
     )
 
     assert result.label == Label.CONTRADICTED
     assert any("Entity conflict" in finding for finding in result.findings)
     assert any("LoRA" in finding for finding in result.findings)
-    assert any("Prefix tuning" in finding for finding in result.findings)
+    assert any("Prefix Tuning" in finding for finding in result.findings)
 
 
 def test_detects_dataset_anchor_swap() -> None:
