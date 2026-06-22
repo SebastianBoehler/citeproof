@@ -91,6 +91,25 @@ def test_verify_claim_reports_weak_retrieval_when_source_has_no_overlap(tmp_path
     assert result.trace.review_action == "find stronger evidence or remove citation"
 
 
+def test_partial_trace_preserves_atom_failure_mode(tmp_path: Path) -> None:
+    (tmp_path / "smith2024.txt").write_text(
+        "Method X improves some robotics tasks.",
+        encoding="utf-8",
+    )
+
+    result = verify_claim_text(
+        "Method X improves all robotics tasks.",
+        tmp_path,
+        ["smith2024"],
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert result.failure_mode == FailureMode.SCOPE_OVERSTATEMENT
+    assert result.trace is not None
+    assert result.trace.final_failure_mode == FailureMode.SCOPE_OVERSTATEMENT
+    assert result.trace.review_action == "narrow the claim scope"
+
+
 def test_markdown_report_includes_failure_mode_and_atoms_for_traced_result(
     tmp_path: Path,
 ) -> None:

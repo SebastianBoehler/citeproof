@@ -121,13 +121,23 @@ def combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgmen
     if all(label == Label.SUPPORTED for label in labels):
         confidence = min(judgment.confidence for judgment in judgments)
         return EvidenceJudgment(Label.SUPPORTED, confidence, "All atomic subclaims are supported.")
-    if any(label in {Label.SUPPORTED, Label.PARTIALLY_SUPPORTED} for label in labels):
+    has_supported_or_partial = any(
+        label in {Label.SUPPORTED, Label.PARTIALLY_SUPPORTED} for label in labels
+    )
+    has_unsupported_or_uncertain = any(label in {Label.UNSUPPORTED, Label.UNCERTAIN} for label in labels)
+    if has_supported_or_partial and has_unsupported_or_uncertain:
         return EvidenceJudgment(
             Label.PARTIALLY_SUPPORTED,
             0.66,
             "Only some atomic subclaims are supported by the retrieved evidence.",
             FailureMode.MISSING_ATOM_SUPPORT,
         )
+    if Label.PARTIALLY_SUPPORTED in labels:
+        strongest = max(
+            (judgment for judgment in judgments if judgment.label == Label.PARTIALLY_SUPPORTED),
+            key=lambda judgment: judgment.confidence,
+        )
+        return _with_failure_mode(strongest, FailureMode.SCOPE_OVERSTATEMENT)
     if Label.UNCERTAIN in labels:
         return EvidenceJudgment(
             Label.UNCERTAIN,
