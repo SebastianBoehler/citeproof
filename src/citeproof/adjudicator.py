@@ -45,7 +45,11 @@ def adjudicate_judgments(
         mode = _fact_failure_mode(facts)
         return EvidenceJudgment(Label.CONTRADICTED, 0.9, "; ".join(facts.findings), mode)
     if facts.label == Label.PARTIALLY_SUPPORTED and heuristic.label != Label.UNSUPPORTED:
-        mode = FailureMode.HEDGED_EVIDENCE if _has_hedge_finding(facts) else FailureMode.SCOPE_OVERSTATEMENT
+        mode = (
+            FailureMode.HEDGED_EVIDENCE
+            if _has_hedge_finding(facts)
+            else FailureMode.SCOPE_OVERSTATEMENT
+        )
         return EvidenceJudgment(Label.PARTIALLY_SUPPORTED, 0.72, "; ".join(facts.findings), mode)
     if nli and nli.label == Label.CONTRADICTED and heuristic.label == Label.UNSUPPORTED:
         return EvidenceJudgment(
@@ -55,13 +59,21 @@ def adjudicate_judgments(
             FailureMode.MODEL_DISAGREEMENT,
         )
     if nli and nli.label == Label.CONTRADICTED:
-        return EvidenceJudgment(Label.CONTRADICTED, nli.confidence, nli.reason)
+        return _with_failure_mode(
+            EvidenceJudgment(Label.CONTRADICTED, nli.confidence, nli.reason, nli.failure_mode),
+            FailureMode.MODEL_DISAGREEMENT,
+        )
     if heuristic.label == Label.SUPPORTED and (nli is None or nli.label == Label.SUPPORTED):
         confidence = min(heuristic.confidence, nli.confidence if nli else heuristic.confidence)
         return EvidenceJudgment(Label.SUPPORTED, confidence, "Verifier gates agree.")
     if heuristic.label == Label.SUPPORTED and nli and nli.label != Label.SUPPORTED:
-        return EvidenceJudgment(Label.PARTIALLY_SUPPORTED, 0.68, "NLI did not confirm full support.")
-    return heuristic
+        return EvidenceJudgment(
+            Label.PARTIALLY_SUPPORTED,
+            0.68,
+            "NLI did not confirm full support.",
+            FailureMode.MODEL_DISAGREEMENT,
+        )
+    return _with_failure_mode(heuristic, _heuristic_failure_mode(heuristic.label))
 
 
 def _fact_failure_mode(facts: FactInspection) -> FailureMode:
@@ -75,6 +87,20 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
 
 def _has_hedge_finding(facts: FactInspection) -> bool:
     return any("hedged" in finding.lower() or "inconclusive" in finding.lower() for finding in facts.findings)
+
+
+def _with_failure_mode(judgment: EvidenceJudgment, fallback: FailureMode) -> EvidenceJudgment:
+    if judgment.label == Label.SUPPORTED or judgment.failure_mode is not None:
+        return judgment
+    return EvidenceJudgment(judgment.label, judgment.confidence, judgment.reason, fallback)
+
+
+def _heuristic_failure_mode(label: Label) -> FailureMode:
+    if label == Label.CONTRADICTED:
+        return FailureMode.CONFLICTING_SOURCES
+    if label == Label.PARTIALLY_SUPPORTED:
+        return FailureMode.SCOPE_OVERSTATEMENT
+    return FailureMode.NO_RATIONALE_SPAN
 
 
 def combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgment:
@@ -91,7 +117,7 @@ def combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgmen
             (judgment for judgment in judgments if judgment.label == Label.CONTRADICTED),
             key=lambda judgment: judgment.confidence,
         )
-        return strongest
+        return _with_failure_mode(strongest, FailureMode.CONFLICTING_SOURCES)
     if all(label == Label.SUPPORTED for label in labels):
         confidence = min(judgment.confidence for judgment in judgments)
         return EvidenceJudgment(Label.SUPPORTED, confidence, "All atomic subclaims are supported.")

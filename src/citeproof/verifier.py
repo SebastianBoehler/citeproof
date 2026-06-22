@@ -139,25 +139,12 @@ def verify_claim_text(
     return verify_claim(Claim(claim_text, tuple(citation_keys or ())), chunks, judge=judge)
 
 
-def _choose_judgment(
-    judgments: list[tuple[SourceChunk, EvidenceJudgment]],
-) -> tuple[SourceChunk, EvidenceJudgment]:
-    priority = {
-        Label.CONTRADICTED: 4,
-        Label.SUPPORTED: 3,
-        Label.PARTIALLY_SUPPORTED: 2,
-        Label.UNSUPPORTED: 1,
-        Label.UNCERTAIN: 0,
-    }
-    return max(judgments, key=lambda item: (priority[item[1].label], item[1].confidence))
-
-
 def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list[AtomVerification]:
     verifications: list[AtomVerification] = []
     group = atomize_claim(claim)
     for atom in group.atoms:
         atom_claim = Claim(atom.text, atom.citation_keys)
-        candidates = select_rationales(atom_claim, chunks, limit=2)
+        candidates = select_rationales(atom_claim, chunks, limit=1)
         if not candidates:
             verifications.append(
                 AtomVerification(
@@ -173,16 +160,13 @@ def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list
             continue
         top = candidates[0]
         judgment = adjudicate_evidence(atom.text, top.text, judge=judge)
-        rationales = tuple(
-            RationaleSpan(
-                source_id=candidate.source_id,
-                citation_key=candidate.citation_key,
-                text=candidate.text,
-                page=candidate.page,
-                relation=_relation_for(judgment.label),
-                score=candidate.lexical_score,
-            )
-            for candidate in candidates
+        rationale = RationaleSpan(
+            source_id=top.source_id,
+            citation_key=top.citation_key,
+            text=top.text,
+            page=top.page,
+            relation=_relation_for(judgment.label),
+            score=top.lexical_score,
         )
         verifications.append(
             AtomVerification(
@@ -190,7 +174,7 @@ def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list
                 context=atom.context,
                 label=judgment.label,
                 confidence=round(judgment.confidence, 3),
-                rationales=rationales,
+                rationales=(rationale,),
                 failure_mode=judgment.failure_mode,
                 reason=judgment.reason,
             )
