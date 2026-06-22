@@ -10,6 +10,14 @@ from citeproof.text import split_sentences
 CITE_COMMAND_RE = re.compile(r"\\cite[a-zA-Z*]*\{([^}]+)\}")
 BRACKET_CITE_RE = re.compile(r"\[([^\]]*@[\w:.-]+[^\]]*)\]")
 AT_CITE_RE = re.compile(r"@([\w:.-]+)")
+COMMA_CLAUSE_MARKER_RE = re.compile(r",\s+(?:while|whereas|but|and)\s+")
+SEMICOLON_CLAUSE_BOUNDARY_RE = re.compile(r";\s+")
+CLAUSE_PREDICATE_RE = re.compile(
+    r"\b(?:achieves?|are|captures?|computes?|contains?|covers?|defines?|has|have|"
+    r"improves?|increases?|is|outperforms?|provides?|reduces?|requires?|shows?|"
+    r"spans?|trains?|uses?|was|were)\b",
+    re.IGNORECASE,
+)
 LATEX_ENVIRONMENTS_TO_DROP = (
     "comment",
     "equation",
@@ -63,9 +71,13 @@ def clean_claim_text(text: str) -> str:
 def split_citation_clauses(sentence: str) -> list[str]:
     """Split one sentence into citation-local clauses when the boundary is explicit."""
 
-    pieces = [piece.strip() for piece in re.split(r";\s+", sentence) if piece.strip()]
+    pieces = _split_explicit_citation_clauses(sentence)
     cited_pieces = [piece for piece in pieces if extract_citation_keys(piece)]
-    if len(cited_pieces) < 2:
+    if (
+        len(cited_pieces) < 2
+        or len(cited_pieces) != len(pieces)
+        or not all(_looks_like_claim_clause(piece) for piece in cited_pieces)
+    ):
         return [sentence]
     return [_ensure_terminal_punctuation(piece, sentence) for piece in cited_pieces]
 
@@ -74,11 +86,27 @@ def _split_latex_keys(raw: str) -> list[str]:
     return [part.strip() for part in raw.split(",")]
 
 
+def _split_explicit_citation_clauses(sentence: str) -> list[str]:
+    pieces: list[str] = []
+    for piece in SEMICOLON_CLAUSE_BOUNDARY_RE.split(sentence):
+        pieces.extend(
+            marker_piece.strip()
+            for marker_piece in COMMA_CLAUSE_MARKER_RE.split(piece)
+            if marker_piece.strip()
+        )
+    return pieces
+
+
+def _looks_like_claim_clause(piece: str) -> bool:
+    return bool(CLAUSE_PREDICATE_RE.search(clean_claim_text(piece)))
+
+
 def _ensure_terminal_punctuation(piece: str, original: str) -> str:
     if piece[-1:] in ".!?":
         return piece
-    if original.rstrip().endswith("."):
-        return f"{piece}."
+    terminal = original.rstrip()[-1:]
+    if terminal in ".!?":
+        return f"{piece}{terminal}"
     return piece
 
 
