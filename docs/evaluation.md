@@ -7,7 +7,7 @@ and macro-F1 matter, but a false `supported` result is the highest-risk error.
 
 ## Local Benchmarks
 
-Current local scores after the conservative hybrid verifier implementation:
+Current local scores after the strict offline verifier updates:
 
 | Benchmark | Total | Accuracy | Macro-F1 | False-Supported Rate |
 | --- | ---: | ---: | ---: | ---: |
@@ -22,8 +22,8 @@ failure-mode classification, and bibliography-gated hallucination checks.
 
 ## Reading Scores
 
-- `false_supported_rate`: share of non-supported expected cases predicted as
-  `supported`. This should stay at `0.0`.
+- `false_supported_rate`: share of all eval cases where a non-supported expected
+  case was predicted as `supported`. This should stay at `0.0`.
 - `accuracy`: exact label match rate across all cases.
 - `macro_f1`: balanced label quality across all labels, including labels absent
   from a small benchmark.
