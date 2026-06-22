@@ -79,16 +79,45 @@ GROUPS = (
             ),
         ),
     ),
+    AttributeGroup(
+        "Supervision",
+        (
+            ("supervised", (r"\bsupervised\b", r"\blabeled\s+(?:data|examples|labels)\b")),
+            ("unsupervised", (r"\bunsupervised\b", r"\bwithout\s+labels\b")),
+        ),
+    ),
+    AttributeGroup(
+        "Study design",
+        (
+            ("randomized", (r"\brandomi[sz]ed\b", r"\brandomi[sz]ed\s+controlled\b")),
+            ("observational", (r"\bobservational\b", r"\bnot\s+randomi[sz]ed\b")),
+        ),
+    ),
+    AttributeGroup(
+        "Summarization style",
+        (
+            ("abstractive", (r"\babstractive\b",)),
+            ("extractive", (r"\bextractive\b",)),
+        ),
+    ),
+    AttributeGroup(
+        "Agent setting",
+        (
+            ("single-agent", (r"\bsingle[- ]agent\b",)),
+            ("multi-agent", (r"\bmulti[- ]agent\b",)),
+        ),
+    ),
 )
 
 TRIGGER_WORDS_RE = re.compile(
     r"\b("
-    r"adamw?|audio|available|chinese|classification|classify|dev|english|"
-    r"french|german|gradient|images?|not|open|optimization|private|proprietary|"
-    r"publicly|retrieval|retrieve|rmsprop|segmentation|segment|sgd|source|"
-    r"spanish|speech|stochastic|summari[sz]ation|summari[sz]e|tabular|"
-    r"tables?|test|text|texts?|textual|train(?:ing)?|translate|translation|"
-    r"validation|videos?|visual"
+    r"abstractive|adamw?|audio|available|chinese|classification|classify|"
+    r"dev|english|extractive|french|german|gradient|images?|labeled|labels|"
+    r"multi-agent|not|observational|open|optimization|private|proprietary|"
+    r"publicly|randomi[sz]ed|retrieval|retrieve|rmsprop|segmentation|segment|"
+    r"sgd|single-agent|source|spanish|speech|stochastic|summari[sz]ation|"
+    r"summari[sz]e|supervised|tabular|tables?|test|text|texts?|textual|"
+    r"train(?:ing)?|translate|translation|unsupervised|validation|videos?|visual"
     r")\b",
     re.IGNORECASE,
 )
@@ -120,6 +149,9 @@ def _mentioned_values(group: AttributeGroup, text: str) -> tuple[str, ...]:
             values.append(value)
     if group.label == "Availability" and "private" in values:
         values = [value for value in values if value != "public"]
+    if group.label == "Study design" and "observational" in values:
+        if re.search(r"\bnot\s+randomi[sz]ed\b", text, re.IGNORECASE):
+            values = [value for value in values if value != "randomized"]
     return tuple(values)
 
 

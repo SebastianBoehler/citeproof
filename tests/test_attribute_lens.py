@@ -89,3 +89,48 @@ def test_ignores_ordinary_table_reference() -> None:
     )
 
     assert findings == ()
+
+
+def test_detects_supervision_conflict() -> None:
+    findings = inspect_attribute_conflicts(
+        "The method uses supervised training.",
+        "The method uses unsupervised training without labels.",
+    )
+
+    assert any("Supervision conflict" in finding for finding in findings)
+
+
+def test_detects_study_design_conflict() -> None:
+    findings = inspect_attribute_conflicts(
+        "The study is randomized.",
+        "The study is observational and not randomized.",
+    )
+
+    assert any("Study design conflict" in finding for finding in findings)
+
+
+def test_detects_summarization_style_conflict() -> None:
+    findings = inspect_attribute_conflicts(
+        "The system performs abstractive summarization.",
+        "The system performs extractive summarization.",
+    )
+
+    assert any("Summarization style conflict" in finding for finding in findings)
+
+
+def test_detects_agent_setting_conflict() -> None:
+    findings = inspect_attribute_conflicts(
+        "The policy is trained in a multi-agent environment.",
+        "The policy is trained in a single-agent environment.",
+    )
+
+    assert any("Agent setting conflict" in finding for finding in findings)
+
+
+def test_ignores_method_attribute_terms_in_different_contexts() -> None:
+    findings = inspect_attribute_conflicts(
+        "The supervised baseline is reported in Table 1.",
+        "The method uses unsupervised training.",
+    )
+
+    assert findings == ()
