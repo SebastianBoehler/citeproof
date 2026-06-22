@@ -152,6 +152,7 @@ class RationaleSpan:
     section: str | None = None
     relation: str = "undetermined"
     score: float = 0.0
+    rank: int = 0
 
     def to_evidence(self) -> EvidenceSpan:
         return EvidenceSpan(
@@ -174,6 +175,11 @@ class AtomVerification:
     rationales: tuple[RationaleSpan, ...] = ()
     failure_mode: FailureMode | None = None
     reason: str = ""
+    candidate_count: int = 0
+    support_candidate_count: int = 0
+    contradiction_candidate_count: int = 0
+    best_support_rank: int | None = None
+    best_contradiction_rank: int | None = None
 
 
 @dataclass(frozen=True)

@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from citeproof.models import (
     AtomVerification,
     ClaimVerificationTrace,
@@ -8,6 +10,78 @@ from citeproof.models import (
     RationaleSpan,
     VerificationResult,
 )
+
+
+def test_atom_trace_serializes_candidate_diagnostics() -> None:
+    rationale = RationaleSpan(
+        source_id="paper",
+        citation_key="smith2024",
+        text="Method X improves sample efficiency.",
+        page=3,
+        relation="support",
+        score=0.91,
+        rank=2,
+    )
+    atom = AtomVerification(
+        text="Method X improves sample efficiency.",
+        context="Method X improves sample efficiency.",
+        label=Label.SUPPORTED,
+        confidence=0.91,
+        rationales=(rationale,),
+        reason="Rationale supports the atom.",
+        candidate_count=5,
+        support_candidate_count=3,
+        contradiction_candidate_count=1,
+        best_support_rank=2,
+        best_contradiction_rank=4,
+    )
+    default_atom = AtomVerification(
+        text="Method X is sample efficient.",
+        context="Method X improves sample efficiency.",
+        label=Label.UNSUPPORTED,
+        confidence=0.2,
+        reason="No supporting rationale.",
+    )
+    trace = ClaimVerificationTrace(
+        claim="Method X improves sample efficiency.",
+        citations=("smith2024",),
+        source_gate_status="passed",
+        atom_verifications=(atom, default_atom),
+        final_label=Label.SUPPORTED,
+        final_confidence=0.91,
+        final_failure_mode=None,
+        review_action="none",
+    )
+    result = VerificationResult(
+        claim="Method X improves sample efficiency.",
+        label=Label.SUPPORTED,
+        confidence=0.91,
+        citations=("smith2024",),
+        evidence=(),
+        reason="All atomic subclaims are supported.",
+        trace=trace,
+    )
+
+    data = result.to_dict()
+
+    atom_data = data["trace"]["atom_verifications"][0]
+    assert atom_data["candidate_count"] == 5
+    assert atom_data["support_candidate_count"] == 3
+    assert atom_data["contradiction_candidate_count"] == 1
+    assert atom_data["best_support_rank"] == 2
+    assert atom_data["best_contradiction_rank"] == 4
+    assert atom_data["rationales"][0]["rank"] == 2
+
+    default_atom_data = data["trace"]["atom_verifications"][1]
+    assert default_atom_data["candidate_count"] == 0
+    assert default_atom_data["support_candidate_count"] == 0
+    assert default_atom_data["contradiction_candidate_count"] == 0
+    assert default_atom_data["best_support_rank"] is None
+    assert default_atom_data["best_contradiction_rank"] is None
+
+    asdict_atom = asdict(atom)
+    assert asdict_atom["candidate_count"] == 5
+    assert asdict_atom["rationales"][0]["rank"] == 2
 
 
 def test_verification_result_serializes_trace_and_failure_mode() -> None:
