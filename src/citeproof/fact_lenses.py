@@ -10,6 +10,10 @@ from citeproof.negation_lens import (
     inspect_negation_and_comparator_conflicts,
     inspect_negation_and_comparator_tensions,
 )
+from citeproof.qualitative_lens import (
+    inspect_qualitative_conflicts,
+    inspect_qualitative_tensions,
+)
 from citeproof.quantities import QuantityMention, numbers_to_units, quantity_mentions
 from citeproof.text import token_overlap_ratio
 
@@ -69,6 +73,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + _unit_conflicts(claim, evidence)
         + _year_conflicts(claim, evidence)
         + negation_findings
+        + list(inspect_qualitative_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)
@@ -77,7 +82,10 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
     )
     if hard_findings:
         return FactInspection(Label.CONTRADICTED, tuple(hard_findings))
-    tension_findings = inspect_negation_and_comparator_tensions(claim, evidence)
+    tension_findings = (
+        inspect_negation_and_comparator_tensions(claim, evidence)
+        + inspect_qualitative_tensions(claim, evidence)
+    )
     if tension_findings:
         return FactInspection(Label.PARTIALLY_SUPPORTED, tension_findings)
     if comparison_inspection.label == Label.PARTIALLY_SUPPORTED:

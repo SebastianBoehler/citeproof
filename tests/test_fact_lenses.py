@@ -107,6 +107,26 @@ def test_detects_scope_gap_partial_support() -> None:
     assert result.label == Label.PARTIALLY_SUPPORTED
 
 
+def test_detects_qualitative_exclusivity_conflict() -> None:
+    result = inspect_facts(
+        "Method X is the only method evaluated on sparse-reward tasks.",
+        "Method X is one of three methods evaluated on sparse-reward tasks.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Exclusivity conflict" in finding for finding in result.findings)
+
+
+def test_detects_qualitative_scope_tension() -> None:
+    result = inspect_facts(
+        "Method X improves performance on all evaluated tasks.",
+        "Method X improves performance on most evaluated tasks.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert any("Scope tension" in finding for finding in result.findings)
+
+
 def test_detects_missing_material_anchor() -> None:
     result = inspect_facts(
         "LoRA improves accuracy over full fine-tuning on GLUE.",

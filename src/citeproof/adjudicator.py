@@ -86,6 +86,15 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         return FailureMode.UNIT_CONFLICT
     if "comparison direction conflict" in text:
         return FailureMode.COMPARISON_DIRECTION_CONFLICT
+    if "exclusivity conflict" in text or "scope tension" in text:
+        return FailureMode.SCOPE_OVERSTATEMENT
+    if (
+        "significance conflict" in text
+        or "state-of-the-art conflict" in text
+        or "requirement conflict" in text
+        or "descriptor conflict" in text
+    ):
+        return FailureMode.NEGATION_CONFLICT
     if "negation conflict" in text or "direction conflict" in text:
         return FailureMode.NEGATION_CONFLICT
     if "entity conflict" in text:
