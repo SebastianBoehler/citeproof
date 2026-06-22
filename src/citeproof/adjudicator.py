@@ -128,6 +128,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         return FailureMode.NEGATION_CONFLICT
     if "overhead conflict" in text:
         return FailureMode.NEGATION_CONFLICT
+    if "component exclusion conflict" in text:
+        return FailureMode.NEGATION_CONFLICT
     if "entity conflict" in text:
         return FailureMode.ENTITY_CONFLICT
     if "role conflict" in text:
