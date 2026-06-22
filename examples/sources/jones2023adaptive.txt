@@ -1,0 +1,5 @@
+Title: Adaptive Replay for Sparse Rewards
+
+Adaptive replay improves sample efficiency in sparse-reward manipulation tasks. Across five simulated robotics tasks, the method reached the target success threshold with 32% fewer environment interactions than the uniform replay baseline.
+
+The effect was strongest in tasks with delayed rewards and weaker in dense-reward locomotion tasks.

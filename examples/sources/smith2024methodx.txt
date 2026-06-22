@@ -1,0 +1,5 @@
+Title: Method X for Sparse Reward Robotics
+
+We compare Method X against PPO on sparse-reward robotics tasks. Method X performed comparably to PPO, with no statistically significant improvement in sample efficiency. The method was more stable in two seeds but did not improve the aggregate success rate.
+
+The ablation study keeps the exploration module active in all variants. Removing the replay buffer reduced final task success.
