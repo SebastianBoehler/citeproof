@@ -37,9 +37,11 @@ _WORD_NUMBER = (
     r"(?:twenty|thirty|forty|fifty)(?:\s+(?:one|two|three|four|five|six|seven|eight|nine))?"
     r"|one|two|three|four|five|six|seven|eight|nine|ten"
 )
-_UNIT = (
-    r"%|percent|examples?|samples?|gpus?|turns?|conversations?|dialogues?|domains?|languages?"
+_WORD_UNIT = (
+    r"percent|examples?|samples?|gpus?|turns?|conversations?|dialogues?|domains?|languages?"
 )
+_STOPWORD_PATTERN = r"and|as|by|for|from|in|of|on|or|than|to|with|without"
+_BRIDGE_WORD = rf"(?!(?:{_STOPWORD_PATTERN})(?!-)\b)[A-Za-z][A-Za-z-]*"
 _SCALE = {"thousand": Decimal("1000"), "million": Decimal("1000000")}
 _COMPACT_SCALE = {
     "k": Decimal("1000"),
@@ -69,8 +71,8 @@ _QUANTITY_RE = re.compile(
     rf"|(?P<plain_number>{_DIGIT_NUMBER})"
     rf"|(?P<word_number>{_WORD_NUMBER})"
     rf")"
-    rf"(?:\s*(?P<symbol_unit>%)|(?P<bridge>(?:\s+[A-Za-z][A-Za-z-]*){{0,3}}?)\s+"
-    rf"(?P<word_unit>{_UNIT}))",
+    rf"(?:\s*(?P<symbol_unit>%)|(?P<bridge>(?:\s+{_BRIDGE_WORD}){{0,3}})\s+"
+    rf"(?P<word_unit>{_WORD_UNIT})(?![A-Za-z-]))",
     re.IGNORECASE,
 )
 
@@ -151,5 +153,5 @@ def _normalize_unit(unit: str) -> str:
 
 
 def _bridge_is_valid(bridge: str) -> bool:
-    words = [word.casefold() for word in re.findall(r"[A-Za-z]+", bridge)]
+    words = [word.casefold() for word in re.findall(r"[A-Za-z][A-Za-z-]*", bridge)]
     return not any(word in _BRIDGE_STOPWORDS for word in words)

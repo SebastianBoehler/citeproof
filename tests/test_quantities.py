@@ -37,6 +37,27 @@ def test_quantity_units_normalizes_two_word_numbers() -> None:
     assert quantities == {"example": (Decimal("42"),)}
 
 
+def test_quantity_units_allows_hyphenated_academic_modifiers() -> None:
+    in_domain = quantity_units("The suite has 42 in-domain examples.")
+    out_of_domain = quantity_units("The suite has 42 out-of-domain examples.")
+
+    assert in_domain == {"example": (Decimal("42"),)}
+    assert out_of_domain == {"example": (Decimal("42"),)}
+
+
+def test_quantity_units_does_not_match_unit_prefixes_inside_longer_words() -> None:
+    assert quantity_units("The score was 3 percentiles higher.") == {}
+    assert quantity_units("The benchmark covers 5 conversational domains.") == {
+        "domain": (Decimal("5"),)
+    }
+
+
+def test_quantity_units_uses_head_unit_after_supported_modifier() -> None:
+    quantities = quantity_units("The dataset includes 1M dialogue turns.")
+
+    assert quantities == {"turn": (Decimal("1000000"),)}
+
+
 def test_quantity_units_normalizes_percent_units() -> None:
     quantities = quantity_units("Accuracy rose by 5 percent and recall rose by 7%.")
 
