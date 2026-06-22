@@ -15,7 +15,8 @@ POSITIVE_CLAIM_RE = re.compile(
 NEGATING_EVIDENCE_RE = re.compile(
     r"\b(no statistically significant|not significant|does not improve|did not improve|"
     r"failed to improve|does not reduce|did not reduce|failed to reduce|no reduction|"
-    r"does not cover|did not cover|does not span|did not span|"
+    r"does not cover|did not cover|does not span|did not span|does not improve f1 score|"
+    r"did not improve f1 score|failed to improve f1 score|"
     r"comparable to|similar to|no improvement|worse than|lower than)\b",
     re.IGNORECASE,
 )

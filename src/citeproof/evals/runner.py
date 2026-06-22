@@ -44,6 +44,7 @@ def run_eval_cases(dataset_path: str | Path, judge: Judge = judge_evidence) -> l
                 "expected_label": expected_label.value,
                 "predicted_label": judgment.label.value,
                 "confidence": round(judgment.confidence, 3),
+                "failure_mode": judgment.failure_mode.value if judgment.failure_mode else None,
                 "false_supported": expected_label != Label.SUPPORTED and judgment.label == Label.SUPPORTED,
                 "pass": expected_label == judgment.label,
                 "reason": judgment.reason,

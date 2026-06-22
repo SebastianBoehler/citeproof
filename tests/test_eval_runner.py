@@ -33,6 +33,7 @@ def test_eval_cases_include_trust_diagnostics(tmp_path: Path) -> None:
             "expected_label": "unsupported",
             "predicted_label": "supported",
             "confidence": 0.95,
+            "failure_mode": None,
             "false_supported": True,
             "pass": False,
             "reason": "Verifier gates agree.",
