@@ -73,6 +73,32 @@ CONFLICT_GROUPS = (
             ("negative", (r"\bnegatively\s+correlated\b", r"\bnegative\s+correlation\b")),
         ),
     ),
+    ProtocolGroup(
+        "Comparator/control",
+        (
+            ("placebo", (r"\bplacebo(?:\s+control(?:\s+group)?)?\b",)),
+            (
+                "usual care",
+                (
+                    r"\busual\s+care\b",
+                    r"\bstandard\s+care\b",
+                    r"\btreatment\s+as\s+usual\b",
+                ),
+            ),
+            ("active control", (r"\bactive\s+control(?:\s+group)?\b",)),
+            ("sham", (r"\bsham(?:\s+control)?\b",)),
+            ("waitlist", (r"\bwait[- ]list(?:\s+control)?\b",)),
+        ),
+    ),
+    ProtocolGroup(
+        "Dosing frequency",
+        (
+            ("twice daily", (r"\btwice\s+daily\b", r"\btwo\s+times\s+(?:per|a)\s+day\b", r"\bbid\b")),
+            ("daily", (r"\bdaily\b", r"\bonce\s+daily\b", r"\bevery\s+day\b", r"\bqd\b")),
+            ("weekly", (r"\bweekly\b", r"\bonce\s+a\s+week\b", r"\bevery\s+week\b")),
+            ("monthly", (r"\bmonthly\b", r"\bonce\s+a\s+month\b", r"\bevery\s+month\b")),
+        ),
+    ),
 )
 TENSION_GROUPS = (
     ProtocolGroup(
@@ -93,10 +119,11 @@ TENSION_GROUPS = (
 VALUE_TERMS_RE = re.compile(
     r"\b("
     r"benjamini[- ]hochberg|blinded|bonferroni|calibration|commercial|decoder[- ]only|"
-    r"deduplicat(?:e|es|ed)|discrimination|disjoint|encoder[- ]decoder|encoder[- ]only|"
-    r"fdr|held[- ]out|holm|masked|negative|non[- ]commercial|open[- ]label|"
-    r"overlap(?:ping)?|positive|primary|prospective|remov(?:e|es|ed)|research|"
-    r"retain(?:s|ed)?|retrospective|secondary|seq2seq|unblinded"
+    r"active|bid|control|daily|deduplicat(?:e|es|ed)|discrimination|disjoint|"
+    r"encoder[- ]decoder|encoder[- ]only|every|fdr|held[- ]out|holm|masked|monthly|"
+    r"negative|non[- ]commercial|once|open[- ]label|overlap(?:ping)?|placebo|positive|"
+    r"primary|prospective|qd|remov(?:e|es|ed)|research|retain(?:s|ed)?|retrospective|"
+    r"secondary|seq2seq|sham|standard|twice|unblinded|usual|wait[- ]list|weekly"
     r")\b",
     re.IGNORECASE,
 )
@@ -157,6 +184,8 @@ def _mentioned_values(group: ProtocolGroup, text: str) -> tuple[str, ...]:
         values = [value for value in values if value != "commercial use"]
     if "unblinded" in values:
         values = [value for value in values if value != "blinded"]
+    if group.label == "Dosing frequency" and "twice daily" in values:
+        values = [value for value in values if value != "daily"]
     return tuple(values)
 
 

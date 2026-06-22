@@ -38,9 +38,10 @@ _WORD_NUMBER = (
     r"|one|two|three|four|five|six|seven|eight|nine|ten"
 )
 _WORD_UNIT = (
-    r"percent|arms?|centers?|centres?|cohorts?|conversations?|dialogues?|domains?|examples?|"
-    r"gpus?|groups?|languages?|participants?|patients?|samples?|sites?|studies|subjects?|"
-    r"trials?|turns?"
+    r"percent|arms?|centers?|centres?|cohorts?|conversations?|days?|dialogues?|domains?|"
+    r"doses?|examples?|g|gpus?|groups?|hours?|kg|languages?|mg|minutes?|ml|months?|"
+    r"participants?|patients?|samples?|seconds?|sites?|studies|subjects?|trials?|turns?|"
+    r"weeks?|years?"
 )
 _STOPWORD_PATTERN = r"and|as|by|for|from|in|of|on|or|than|to|with|without"
 _BRIDGE_WORD = rf"(?!(?:{_STOPWORD_PATTERN})(?!-)\b)[A-Za-z][A-Za-z-]*"

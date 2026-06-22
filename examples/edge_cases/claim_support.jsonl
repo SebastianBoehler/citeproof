@@ -120,3 +120,7 @@
 {"id":"ratio-ci-null-conflict","claim":"The odds ratio excludes the null value.","evidence":"The odds ratio was 0.82 with 95% CI [0.60, 1.12].","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
 {"id":"patient-count-conflict","claim":"The study enrolled 100 patients.","evidence":"The study enrolled 120 patients.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
 {"id":"participant-count-conflict","claim":"The trial included 240 participants.","evidence":"The trial included 180 participants.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"comparator-protocol-conflict","claim":"The trial compared the intervention with placebo.","evidence":"The trial compared the intervention with usual care.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"dosing-frequency-protocol-conflict","claim":"Patients received the drug daily.","evidence":"Patients received the drug weekly.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"followup-duration-conflict","claim":"The study measured mortality at 30 days.","evidence":"The study measured mortality at 90 days.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"dose-amount-conflict","claim":"Patients received 10 mg of the drug.","evidence":"Patients received 20 mg of the drug.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}

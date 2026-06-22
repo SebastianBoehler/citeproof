@@ -79,6 +79,24 @@ def test_quantity_units_recognizes_participants_and_studies() -> None:
     }
 
 
+def test_quantity_units_recognizes_duration_units() -> None:
+    quantities = quantity_units("The study measured mortality at 30 days and 6 months.")
+
+    assert quantities == {
+        "day": (Decimal("30"),),
+        "month": (Decimal("6"),),
+    }
+
+
+def test_quantity_units_recognizes_dose_units() -> None:
+    quantities = quantity_units("Patients received 10 mg and 2 doses.")
+
+    assert quantities == {
+        "mg": (Decimal("10"),),
+        "dose": (Decimal("2"),),
+    }
+
+
 def test_quantity_units_normalizes_percent_units() -> None:
     quantities = quantity_units("Accuracy rose by 5 percent and recall rose by 7%.")
 
