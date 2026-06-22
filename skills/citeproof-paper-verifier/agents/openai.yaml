@@ -1,0 +1,4 @@
+interface:
+  display_name: "CiteProof Paper Verifier"
+  short_description: "Verify LaTeX claims against cited sources"
+  default_prompt: "Use $citeproof-paper-verifier to verify the cited claims in this LaTeX paper."

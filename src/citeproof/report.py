@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from citeproof.dashboard import results_to_html
 from citeproof.models import VerificationResult
 
 
@@ -57,6 +58,7 @@ def write_reports(
     results: list[VerificationResult],
     json_output: str | Path | None,
     markdown_output: str | Path | None,
+    html_output: str | Path | None = None,
 ) -> None:
     """Write requested report files."""
 
@@ -68,3 +70,7 @@ def write_reports(
         path = Path(markdown_output)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(results_to_markdown(results), encoding="utf-8")
+    if html_output:
+        path = Path(html_output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(results_to_html(results), encoding="utf-8")

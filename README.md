@@ -58,7 +58,8 @@ Write reports:
 uv run citeproof verify examples/draft.md \
   --sources examples/sources \
   --json-output reports/draft.json \
-  --markdown-output reports/draft.md
+  --markdown-output reports/draft.md \
+  --html-output reports/draft.html
 ```
 
 Verify a LaTeX paper with BibTeX and a directory of PDFs:
@@ -68,8 +69,12 @@ uv run citeproof verify-paper path/to/paper.tex \
   --bib path/to/references.bib \
   --sources path/to/papers \
   --json-output reports/paper.json \
-  --markdown-output reports/paper.md
+  --markdown-output reports/paper.md \
+  --html-output reports/paper.html
 ```
+
+The HTML report is a local audit dashboard with clickable claim rows, citation
+chips, verdicts, evidence snippets, and atom-level failure reasons.
 
 When `--bib` is supplied, CiteProof only trusts source files that map to BibTeX
 entries. This prevents arbitrary local files from satisfying made-up citation
@@ -131,6 +136,14 @@ Run the MCP server if the optional dependency is installed:
 uv sync --extra mcp
 uv run citeproof mcp
 ```
+
+## Agent Skill
+
+The repository includes a drop-in Codex skill at
+`skills/citeproof-paper-verifier`. Copy or symlink that folder into an agent's
+skills directory to teach it the CiteProof paper-writing loop: locate the LaTeX
+draft, BibTeX file, and source PDFs; run strict CLI checks; inspect the HTML
+audit dashboard; and repair unsupported or contradicted claims conservatively.
 
 ## Verification Model
 

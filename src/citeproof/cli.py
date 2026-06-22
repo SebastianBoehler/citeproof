@@ -9,6 +9,7 @@ import sys
 from citeproof.entailment import judge_evidence
 from citeproof.evals.runner import run_eval_cases, run_eval_file
 from citeproof.evals.draft import run_draft_eval
+from citeproof.dashboard import paper_report_to_html
 from citeproof.paper import render_paper_report, verify_paper
 from citeproof.report import results_to_json, results_to_markdown, write_reports
 from citeproof.verifier import verify_claim_text, verify_draft
@@ -26,7 +27,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _run_verify(args: argparse.Namespace) -> int:
     results = verify_draft(args.draft, args.sources, judge=_make_judge(args))
-    write_reports(results, args.json_output, args.markdown_output)
+    write_reports(results, args.json_output, args.markdown_output, args.html_output)
     if args.format == "markdown":
         print(results_to_markdown(results))
     else:
@@ -103,6 +104,8 @@ def _run_verify_paper(args: argparse.Namespace) -> int:
         _write_text(args.json_output, report.to_json())
     if args.markdown_output:
         _write_text(args.markdown_output, render_paper_report(report))
+    if args.html_output:
+        _write_text(args.html_output, paper_report_to_html(report))
     print(report.to_json() if args.format == "json" else render_paper_report(report))
     return _paper_exit_code(report)
 
@@ -190,6 +193,7 @@ def _build_parser() -> argparse.ArgumentParser:
     verify.add_argument("--format", choices=["json", "markdown"], default="json")
     verify.add_argument("--json-output")
     verify.add_argument("--markdown-output")
+    verify.add_argument("--html-output")
     _add_verifier_args(verify)
     verify.set_defaults(func=_run_verify)
 
@@ -239,6 +243,7 @@ def _build_parser() -> argparse.ArgumentParser:
     paper.add_argument("--format", choices=["json", "markdown"], default="json")
     paper.add_argument("--json-output")
     paper.add_argument("--markdown-output")
+    paper.add_argument("--html-output")
     _add_verifier_args(paper)
     paper.set_defaults(func=_run_verify_paper)
 
