@@ -13,6 +13,9 @@ measure changes before building editor or SaaS surfaces.
 - Preserve PDF page numbers in retrieved evidence spans.
 - Align source files to BibTeX keys by title overlap when filenames are paper titles.
 - Retrieve citation-scoped evidence snippets.
+- Split compound claims into context-preserving atoms for coverage checks.
+- Apply deterministic fact lenses for numbers, years, hedging, scope gaps, and
+  selected negation risks.
 - Label claims as `supported`, `partially_supported`, `contradicted`,
   `unsupported`, or `uncertain`.
 - Check LaTeX citation keys against BibTeX entries and required fields.
@@ -119,18 +122,34 @@ uv run citeproof mcp
 
 ## Verification Model
 
-CiteProof treats contradiction as a first-class outcome. A contradiction is only
+CiteProof optimizes first for avoiding false `supported` labels. A claim is
+only `supported` when citation metadata, source resolution, retrieval, fact
+lenses, and optional NLI agree. When signals disagree, CiteProof keeps the claim
+in the review queue as `partially_supported`, `uncertain`, or `unsupported`.
+
+CiteProof treats contradiction as a first-class outcome. A contradiction is
 returned when a source span contains overlapping content and a material conflict,
-such as a numeric mismatch or a phrase like "no statistically significant
-improvement" against a claim that says a method "improves" or "outperforms".
+such as a numeric mismatch, a year conflict, or a negated result against a claim
+that says a method improves, reduces, or outperforms.
 
 The conservative ordering is:
 
 1. Missing cited source -> `uncertain`
 2. Retrieved contradiction -> `contradicted`
-3. Strong source overlap -> `supported`
-4. Moderate source overlap -> `partially_supported`
+3. Atomic subclaim coverage -> `supported` only when all atoms are supported
+4. Hedged, narrower, or incomplete evidence -> `partially_supported`
 5. Source silence -> `unsupported`
 
 The most important product metric is false-supported rate: cases where the
 system says `supported` while the expected label is anything else.
+
+## Check Modes
+
+CiteProof exposes checks as separate commands rather than one loose mode flag:
+
+- Bibliography mode: `verify-bib` checks citation keys and required BibTeX fields.
+- Metadata mode: `verify-metadata` checks BibTeX entries against external scholarly metadata.
+- Source mode: `verify-paper --bib ... --sources ...` gates local PDFs/text files through the bibliography.
+- Claim mode: `verify` checks citation-bearing claims against loaded sources.
+- Strict mode: `verify-paper` combines bibliography, source, retrieval, fact-lens, and optional NLI checks.
+- Benchmark mode: `eval` and `eval-draft` report `accuracy`, `macro_f1`, `false_supported_rate`, and per-case failures.
