@@ -7,13 +7,14 @@ import re
 from citeproof.text import tokenize
 
 RESULT_RE = re.compile(
-    r"\b(improves?|improved|reduces?|reduced|increases?|increased|outperforms?)\b",
+    r"\b(generali[sz]es?|improves?|improved|reduces?|reduced|increases?|increased|outperforms?)\b",
     re.IGNORECASE,
 )
 CONDITION_LIMIT_RE = re.compile(
-    r"\b(only\s+(?:when|if)|under\s+oracle|with\s+oracle)\b",
+    r"\b(only\s+(?:when|if)|when|if|assuming|provided\s+that|under\s+oracle|with\s+oracle)\b",
     re.IGNORECASE,
 )
+SUBGROUP_LIMIT_RE = re.compile(r"\bamong\s+[A-Za-z0-9 -]{1,80}\s+only\b", re.IGNORECASE)
 SUBSET_LIMIT_RE = re.compile(
     r"\b(?:\d+(?:\.\d+)?%|one\s+percent|small|limited)\s+"
     r"(?:[A-Za-z0-9-]+\s+){0,2}subset\b|"
@@ -81,6 +82,7 @@ def inspect_component_exclusion_conflicts(claim: str, evidence: str) -> tuple[st
 def _evidence_is_limited_beyond_claim(claim: str, evidence: str) -> bool:
     return (
         _has_new_limiter(CONDITION_LIMIT_RE, claim, evidence)
+        or _has_new_limiter(SUBGROUP_LIMIT_RE, claim, evidence)
         or _has_new_limiter(SUBSET_LIMIT_RE, claim, evidence)
         or _has_new_limiter(CASE_STUDY_RE, claim, evidence)
         or (SIMULATION_RE.search(evidence) and not SIMULATION_RE.search(claim))

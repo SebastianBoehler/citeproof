@@ -33,6 +33,20 @@ from citeproof.context_lens import (
             "The tool improves productivity.",
             "In one case study, the tool improves productivity.",
         ),
+        (
+            "The intervention reduces hospital readmissions.",
+            "The intervention reduces hospital readmissions among low-risk patients only.",
+        ),
+        (
+            "The detector improves robustness to adversarial prompts.",
+            "The detector improves robustness to adversarial prompts "
+            "when inputs are pre-filtered by a human moderator.",
+        ),
+        (
+            "The model generalizes to deployment data.",
+            "The model generalizes to deployment data when the deployment distribution "
+            "matches the training distribution.",
+        ),
     ],
 )
 def test_detects_context_limitations(claim: str, evidence: str) -> None:
