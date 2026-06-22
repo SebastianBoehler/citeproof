@@ -6,6 +6,10 @@ import re
 
 from citeproof.comparison_lens import inspect_comparison_direction
 from citeproof.models import FactInspection, Label
+from citeproof.negation_lens import (
+    inspect_negation_and_comparator_conflicts,
+    inspect_negation_and_comparator_tensions,
+)
 from citeproof.quantities import QuantityMention, numbers_to_units, quantity_mentions
 from citeproof.text import token_overlap_ratio
 
@@ -47,10 +51,16 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
     comparison_inspection = inspect_comparison_direction(
         claim, evidence, _material_anchors, _normalize_anchor
     )
+    negation_findings = list(inspect_negation_and_comparator_conflicts(claim, evidence))
+    if comparison_inspection.label == Label.PARTIALLY_SUPPORTED:
+        negation_findings = [
+            finding for finding in negation_findings if not finding.startswith("Direction conflict:")
+        ]
     hard_findings = (
         _number_conflicts(claim, evidence)
         + _unit_conflicts(claim, evidence)
         + _year_conflicts(claim, evidence)
+        + negation_findings
     )
     hard_findings += (
         list(comparison_inspection.findings)
@@ -59,6 +69,9 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
     )
     if hard_findings:
         return FactInspection(Label.CONTRADICTED, tuple(hard_findings))
+    tension_findings = inspect_negation_and_comparator_tensions(claim, evidence)
+    if tension_findings:
+        return FactInspection(Label.PARTIALLY_SUPPORTED, tension_findings)
     if comparison_inspection.label == Label.PARTIALLY_SUPPORTED:
         return FactInspection(Label.PARTIALLY_SUPPORTED, comparison_inspection.findings)
     entity_findings = _entity_conflicts(claim, evidence)

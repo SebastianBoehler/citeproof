@@ -179,3 +179,43 @@ def test_gpt4_anchor_does_not_match_gpt4o() -> None:
     assert result.label == Label.CONTRADICTED
     assert any("GPT-4" in finding for finding in result.findings)
     assert any("GPT-4o" in finding for finding in result.findings)
+
+
+def test_detects_use_negation_fact_conflict() -> None:
+    result = inspect_facts(
+        "The method uses LoRA adapters.",
+        "The method does not use LoRA adapters.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Negation conflict" in finding for finding in result.findings)
+
+
+def test_detects_direction_fact_conflict() -> None:
+    result = inspect_facts(
+        "Error decreased by 5 percent.",
+        "Error increased by 5 percent.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Direction conflict" in finding for finding in result.findings)
+
+
+def test_detects_numeric_bound_fact_conflict() -> None:
+    result = inspect_facts(
+        "Schema-Guided Dialogue contains over 16k task-oriented dialogues.",
+        "Schema-Guided Dialogue contains up to 16,000 task-oriented dialogues.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Numeric bound conflict" in finding for finding in result.findings)
+
+
+def test_detects_numeric_bound_fact_tension() -> None:
+    result = inspect_facts(
+        "Schema-Guided Dialogue contains over 16k task-oriented dialogues.",
+        "Schema-Guided Dialogue contains 16,000 task-oriented dialogues.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert any("Numeric bound tension" in finding for finding in result.findings)
