@@ -30,6 +30,15 @@ TECHNICAL_PROPERTY_CONFLICTS = (
     "evaluation domain conflict",
     "data sensitivity conflict",
 )
+STATISTICAL_CONFLICTS = (
+    "confidence interval conflict",
+    "f1 averaging conflict",
+    "summary statistic conflict",
+    "uncertainty statistic conflict",
+    "pairedness conflict",
+    "tail count conflict",
+    "test family conflict",
+)
 
 
 def adjudicate_evidence(
@@ -124,6 +133,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
     if any(conflict in text for conflict in ATTRIBUTE_ENTITY_CONFLICTS):
         return FailureMode.ENTITY_CONFLICT
     if any(conflict in text for conflict in TECHNICAL_PROPERTY_CONFLICTS):
+        return FailureMode.ENTITY_CONFLICT
+    if any(conflict in text for conflict in STATISTICAL_CONFLICTS):
         return FailureMode.ENTITY_CONFLICT
     return FailureMode.CONFLICTING_SOURCES
 
