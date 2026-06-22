@@ -43,6 +43,16 @@ def test_ignores_unrelated_negated_object() -> None:
     assert findings == ()
 
 
+def test_ignores_scoped_negation_with_affirmative_contrast() -> None:
+    findings = inspect_negation_and_comparator_conflicts(
+        "The method uses supervised adapters.",
+        "The method does not use supervised adapters for baselines, "
+        "but uses them for the final run.",
+    )
+
+    assert findings == ()
+
+
 def test_detects_direction_conflict() -> None:
     findings = inspect_negation_and_comparator_conflicts(
         "Error decreased by 5 percent.",
@@ -61,6 +71,15 @@ def test_ignores_direction_change_for_different_metric() -> None:
     assert findings == ()
 
 
+def test_ignores_bare_more_less_direction_words() -> None:
+    findings = inspect_negation_and_comparator_conflicts(
+        "The paper reports more ablations in the appendix.",
+        "The paper reports less wall-clock time in the appendix.",
+    )
+
+    assert findings == ()
+
+
 def test_detects_incompatible_numeric_bounds() -> None:
     findings = inspect_negation_and_comparator_conflicts(
         "Schema-Guided Dialogue contains over 16k task-oriented dialogues.",
@@ -74,6 +93,15 @@ def test_allows_compatible_lower_bound_quantity() -> None:
     findings = inspect_negation_and_comparator_conflicts(
         "Schema-Guided Dialogue contains at least 16k task-oriented dialogues.",
         "Schema-Guided Dialogue contains 20,000 task-oriented dialogues.",
+    )
+
+    assert findings == ()
+
+
+def test_ignores_numeric_bound_conflict_for_different_entities() -> None:
+    findings = inspect_negation_and_comparator_conflicts(
+        "Dataset A contains over 16k dialogues.",
+        "Dataset B contains up to 16,000 dialogues.",
     )
 
     assert findings == ()

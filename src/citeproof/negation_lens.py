@@ -36,8 +36,8 @@ WITHOUT_RE = re.compile(
     r"\bwithout\s+(?P<object>[A-Za-z0-9][A-Za-z0-9 .-]{1,80})",
     re.IGNORECASE,
 )
-POSITIVE_DIRECTION_RE = re.compile(r"\b(increase[sd]?|higher|more)\b", re.IGNORECASE)
-NEGATIVE_DIRECTION_RE = re.compile(r"\b(decrease[sd]?|lower|less|reduced)\b", re.IGNORECASE)
+POSITIVE_DIRECTION_RE = re.compile(r"\b(increase[sd]?|higher)\b", re.IGNORECASE)
+NEGATIVE_DIRECTION_RE = re.compile(r"\b(decrease[sd]?|lower|reduced)\b", re.IGNORECASE)
 LOWER_BOUND_RE = re.compile(
     r"\b(over|more\s+than|greater\s+than|at\s+least|no\s+less\s+than)\b",
     re.IGNORECASE,
@@ -53,12 +53,19 @@ OBJECT_STOP_RE = re.compile(
     r"\b(?:but|although|while|whereas|and|with|during|from|than)\b",
     re.IGNORECASE,
 )
+BOUND_CONTEXT_STOP_RE = re.compile(
+    r"\b(?:at\s+least|at\s+most|greater\s+than|less\s+than|more\s+than|"
+    r"no\s+less\s+than|no\s+more\s+than|up\s+to|over|under|exactly)\b",
+    re.IGNORECASE,
+)
+CONTRASTED_USE_RE = re.compile(r"\bbut\s+uses?\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
 class BoundQuantity:
     mention: QuantityMention
     bound: str
+    context_tokens: frozenset[str]
     strict: bool = False
 
 
@@ -104,9 +111,26 @@ def _evidence_negated_objects(text: str) -> list[str]:
     for pattern in (NEGATED_USE_RE, NEGATED_TRAIN_RE, WITHOUT_RE):
         for match in pattern.finditer(text):
             obj = _clean_object(match.group("object"))
-            if obj:
+            if obj and not _negation_has_affirmative_scope(text, match, obj):
                 objects.append(obj)
     return objects
+
+
+def _negation_has_affirmative_scope(text: str, match: re.Match[str], obj: str) -> bool:
+    raw_object = match.group("object")
+    tail = text[match.end() : match.end() + 120]
+    if " for " in f" {raw_object.lower()} " and CONTRASTED_USE_RE.search(tail):
+        return True
+    if CONTRASTED_USE_RE.search(tail):
+        return True
+    return _has_affirmative_use_after(text, match.end(), obj)
+
+
+def _has_affirmative_use_after(text: str, start: int, obj: str) -> bool:
+    for match in CLAIM_USE_RE.finditer(text, start):
+        if _objects_overlap(obj, _clean_object(match.group("object"))):
+            return True
+    return False
 
 
 def _clean_object(text: str) -> str:
@@ -166,6 +190,8 @@ def _numeric_bound_conflicts(claim: str, evidence: str) -> list[str]:
         for evidence_bound in _bound_quantities(evidence):
             if claim_bound.mention.unit != evidence_bound.mention.unit:
                 continue
+            if not _bound_context_overlaps(claim_bound, evidence_bound):
+                continue
             if _bounds_conflict(claim_bound, evidence_bound):
                 findings.append(_bound_finding("Numeric bound conflict", claim_bound, evidence_bound))
     return findings
@@ -176,6 +202,8 @@ def _numeric_bound_tensions(claim: str, evidence: str) -> list[str]:
     for claim_bound in _bound_quantities(claim):
         for evidence_bound in _bound_quantities(evidence):
             if claim_bound.mention.unit != evidence_bound.mention.unit:
+                continue
+            if not _bound_context_overlaps(claim_bound, evidence_bound):
                 continue
             if _bounds_tense(claim_bound, evidence_bound):
                 findings.append(_bound_finding("Numeric bound tension", claim_bound, evidence_bound))
@@ -191,8 +219,24 @@ def _bound_quantities(text: str) -> list[BoundQuantity]:
             start = text.find(mention.text)
         cursor = max(start + len(mention.text), cursor)
         context = text[max(0, start - 32) : start]
-        bounds.append(BoundQuantity(mention, *_bound_category(context)))
+        bound, strict = _bound_category(context)
+        bounds.append(BoundQuantity(mention, bound, _bound_context_tokens(text, mention), strict))
     return bounds
+
+
+def _bound_context_tokens(text: str, mention: QuantityMention) -> frozenset[str]:
+    context = text.replace(mention.text, " ")
+    context = BOUND_CONTEXT_STOP_RE.sub(" ", context)
+    tokens = set(tokenize(context))
+    tokens.update(token.casefold() for token in re.findall(r"\b[A-Z]\b", context))
+    return frozenset(tokens)
+
+
+def _bound_context_overlaps(claim: BoundQuantity, evidence: BoundQuantity) -> bool:
+    if not claim.context_tokens or not evidence.context_tokens:
+        return False
+    overlap = claim.context_tokens & evidence.context_tokens
+    return len(overlap) / min(len(claim.context_tokens), len(evidence.context_tokens)) >= 0.75
 
 
 def _bound_category(prefix: str) -> tuple[str, bool]:
