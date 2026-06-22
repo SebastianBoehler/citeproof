@@ -84,6 +84,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         return FailureMode.NUMERIC_CONFLICT
     if "unit conflict" in text:
         return FailureMode.UNIT_CONFLICT
+    if "entity conflict" in text:
+        return FailureMode.ENTITY_CONFLICT
     return FailureMode.CONFLICTING_SOURCES
 
 

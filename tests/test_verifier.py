@@ -56,6 +56,27 @@ def test_verify_claim_does_not_allow_support_to_hide_contradiction() -> None:
     assert any("does not improve accuracy" in rationale.text for rationale in rationales)
 
 
+def test_verify_claim_flags_material_anchor_conflict() -> None:
+    chunks = [
+        SourceChunk(
+            source_id="paper",
+            citation_key="smith2024",
+            chunk_id="swap",
+            text="Prefix Tuning improves accuracy over full fine-tuning on GLUE.",
+        )
+    ]
+
+    result = verify_claim(
+        Claim("LoRA improves accuracy over full fine-tuning on GLUE.", ("smith2024",)),
+        chunks,
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert result.failure_mode == FailureMode.ENTITY_CONFLICT
+    assert result.trace is not None
+    assert result.trace.review_action == "fix the entity or cite a matching source"
+
+
 def test_verify_claim_records_candidate_diagnostics() -> None:
     chunks = [
         SourceChunk(

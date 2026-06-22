@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from citeproof.fact_lenses import inspect_facts
 from citeproof.models import EvidenceJudgment, Label
 from citeproof.text import token_overlap_ratio
 
@@ -54,6 +55,10 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
     overlap = token_overlap_ratio(claim, evidence)
     if overlap < 0.18:
         return EvidenceJudgment(Label.UNSUPPORTED, 0.25, "Evidence has too little claim overlap.")
+
+    fact_inspection = inspect_facts(claim, evidence)
+    if fact_inspection.label == Label.CONTRADICTED:
+        return EvidenceJudgment(Label.CONTRADICTED, 0.82, "; ".join(fact_inspection.findings))
 
     if overlap >= 0.45 and _has_numeric_conflict(claim, evidence):
         return EvidenceJudgment(

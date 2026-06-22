@@ -17,3 +17,4 @@
 {"id":"metric-cross-support","claim":"Method X improves accuracy over the baseline.","evidence":"Method X improves accuracy over the baseline, with no improvement in F1.","expected_label":"supported"}
 {"id":"metric-cross-contradiction","claim":"Method X improves F1 score over the baseline.","evidence":"Method X improves accuracy over the baseline, with no improvement in F1.","expected_label":"contradicted","expected_failure_mode":"negation_conflict"}
 {"id":"unit-overlap-not-conflict","claim":"The evaluation used 42 percent of the dataset.","evidence":"The evaluation used 42 percent of the dataset, corresponding to 42 examples.","expected_label":"supported"}
+{"id":"material-anchor-swap","claim":"LoRA improves accuracy over full fine-tuning on GLUE.","evidence":"Prefix Tuning improves accuracy over full fine-tuning on GLUE.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
