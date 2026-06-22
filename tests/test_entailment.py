@@ -154,3 +154,57 @@ def test_dataset_anchor_swap_is_not_supported() -> None:
     )
 
     assert judgment.label == Label.CONTRADICTED
+
+
+def test_reversed_comparison_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "LoRA outperforms Prefix Tuning on GLUE.",
+        "Prefix Tuning outperforms LoRA on GLUE.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+
+
+def test_reversed_comparison_with_leading_context_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "On GLUE, LoRA outperforms Prefix Tuning.",
+        "On GLUE, Prefix Tuning outperforms LoRA.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+
+
+def test_reversed_comparison_with_different_context_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "LoRA outperforms Prefix Tuning on GLUE.",
+        "Prefix Tuning outperforms LoRA in low-resource settings.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+
+
+def test_reversed_comparison_with_different_dimension_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "AlphaModel is better than BetaModel in latency.",
+        "BetaModel has higher accuracy than AlphaModel.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+
+
+def test_reversed_comparison_with_benchmark_framing_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "The GLUE benchmark shows LoRA outperforms Prefix Tuning.",
+        "The GLUE benchmark shows Prefix Tuning outperforms LoRA.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+
+
+def test_negation_contradiction_outranks_partial_fact_inspection() -> None:
+    judgment = judge_evidence(
+        "Method X improves accuracy.",
+        "Preliminary results show Method X does not improve accuracy.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
