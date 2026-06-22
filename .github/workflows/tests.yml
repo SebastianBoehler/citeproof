@@ -23,6 +23,12 @@ jobs:
         run: uv run --extra dev pytest
       - name: Run sample eval
         run: uv run citeproof eval examples/claim_support.jsonl
+      - name: Run hallucination eval
+        run: |
+          uv run citeproof eval-draft examples/hallucination/draft.md \
+            --sources examples/hallucination/sources \
+            --bib examples/hallucination/references.bib \
+            --expected examples/hallucination/expected.jsonl
       - name: Run sample draft verification
         run: |
           set +e

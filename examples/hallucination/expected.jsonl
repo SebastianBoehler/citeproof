@@ -1,0 +1,5 @@
+{"id":"real-supported","claim_contains":"Adaptive replay improves sample efficiency","expected_label":"supported"}
+{"id":"source-contradiction","claim_contains":"Method X outperforms PPO","expected_label":"contradicted"}
+{"id":"unsupported-claim","claim_contains":"Adaptive replay uses a transformer policy","expected_label":"unsupported"}
+{"id":"missing-source","claim_contains":"GhostNet improves all robotics tasks","expected_label":"uncertain"}
+{"id":"fabricated-local-source","claim_contains":"Fictional Citation Optimizer achieves perfect citation verification","expected_label":"uncertain"}

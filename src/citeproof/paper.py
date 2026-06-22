@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from citeproof.bibliography import parse_bibtex, verify_bibliography
+from citeproof.models import Source
 from citeproof.parser import parse_claims
 from citeproof.sources import align_sources_to_bibtex, build_chunks, load_sources
 from citeproof.verifier import verify_claim
@@ -33,6 +34,24 @@ def verify_paper(
     """Verify a LaTeX draft against BibTeX metadata and local source files."""
 
     bibliography = verify_bibliography(tex_path, bib_path)
+    trusted_sources, loaded_count, mapped_count = load_bib_aligned_sources(bib_path, source_dir)
+    chunks = build_chunks(trusted_sources)
+    claims = parse_claims(Path(tex_path).read_text(encoding="utf-8"))
+    results = [verify_claim(claim, chunks) for claim in claims]
+    return PaperVerificationReport(
+        bibliography=bibliography.to_dict(),
+        claim_results=[result.to_dict() for result in results],
+        mapped_source_count=mapped_count,
+        loaded_source_count=loaded_count,
+    )
+
+
+def load_bib_aligned_sources(
+    bib_path: str | Path,
+    source_dir: str | Path,
+) -> tuple[list[Source], int, int]:
+    """Load sources and keep only files that map to BibTeX keys."""
+
     entries = parse_bibtex(Path(bib_path).read_text(encoding="utf-8"))
     title_by_key = {
         key: entry.fields["title"]
@@ -41,16 +60,9 @@ def verify_paper(
     }
     sources = load_sources(source_dir)
     aligned_sources = align_sources_to_bibtex(sources, title_by_key)
-    chunks = build_chunks(aligned_sources)
-    claims = parse_claims(Path(tex_path).read_text(encoding="utf-8"))
-    results = [verify_claim(claim, chunks) for claim in claims]
-    mapped_keys = {source.citation_key for source in aligned_sources} & set(title_by_key)
-    return PaperVerificationReport(
-        bibliography=bibliography.to_dict(),
-        claim_results=[result.to_dict() for result in results],
-        mapped_source_count=len(mapped_keys),
-        loaded_source_count=len(sources),
-    )
+    trusted_sources = [source for source in aligned_sources if source.citation_key in title_by_key]
+    mapped_keys = {source.citation_key for source in trusted_sources}
+    return trusted_sources, len(sources), len(mapped_keys)
 
 
 def render_paper_report(report: PaperVerificationReport) -> str:

@@ -32,6 +32,10 @@ loop is in place.
 uv sync --extra dev
 uv run citeproof verify examples/draft.md --sources examples/sources
 uv run citeproof eval examples/claim_support.jsonl
+uv run citeproof eval-draft examples/hallucination/draft.md \
+  --sources examples/hallucination/sources \
+  --bib examples/hallucination/references.bib \
+  --expected examples/hallucination/expected.jsonl
 uv run pytest
 ```
 
@@ -53,6 +57,12 @@ uv run citeproof verify-paper path/to/paper.tex \
   --json-output reports/paper.json \
   --markdown-output reports/paper.md
 ```
+
+When `--bib` is supplied, CiteProof only trusts source files that map to BibTeX
+entries. This prevents arbitrary local files from satisfying made-up citation
+keys. A fabricated BibTeX entry with a fabricated local PDF still needs the
+next metadata-verification layer, such as CrossRef/OpenAlex/arXiv/Semantic
+Scholar checks.
 
 Check only bibliography integrity:
 

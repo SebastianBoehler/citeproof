@@ -6,6 +6,7 @@ import argparse
 import sys
 
 from citeproof.evals.runner import run_eval_file
+from citeproof.evals.draft import run_draft_eval
 from citeproof.paper import render_paper_report, verify_paper
 from citeproof.report import results_to_json, results_to_markdown, write_reports
 from citeproof.verifier import verify_claim_text, verify_draft
@@ -40,6 +41,16 @@ def _run_verify_claim(args: argparse.Namespace) -> int:
 def _run_eval(args: argparse.Namespace) -> int:
     summary = run_eval_file(args.dataset)
     print(summary.to_json())
+    return 0
+
+
+def _run_eval_draft(args: argparse.Namespace) -> int:
+    result = run_draft_eval(args.draft, args.sources, args.expected, args.bib)
+    print(result["summary"])
+    if args.details_output:
+        import json
+
+        _write_text(args.details_output, json.dumps(result["cases"], indent=2, sort_keys=True))
     return 0
 
 
@@ -112,6 +123,14 @@ def _build_parser() -> argparse.ArgumentParser:
     eval_parser = subparsers.add_parser("eval", help="Run a claim-support eval JSONL file.")
     eval_parser.add_argument("dataset")
     eval_parser.set_defaults(func=_run_eval)
+
+    eval_draft = subparsers.add_parser("eval-draft", help="Evaluate draft labels against JSONL.")
+    eval_draft.add_argument("draft")
+    eval_draft.add_argument("--sources", required=True)
+    eval_draft.add_argument("--expected", required=True)
+    eval_draft.add_argument("--bib")
+    eval_draft.add_argument("--details-output")
+    eval_draft.set_defaults(func=_run_eval_draft)
 
     bib = subparsers.add_parser("verify-bib", help="Verify LaTeX citation keys against BibTeX.")
     bib.add_argument("tex")
