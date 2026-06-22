@@ -150,6 +150,24 @@ def test_detects_reversed_outperformed_comparison() -> None:
     assert result.label == Label.CONTRADICTED
 
 
+def test_passive_outperformed_matches_active_equivalent() -> None:
+    result = inspect_facts(
+        "LoRA was outperformed by Prefix Tuning on GLUE.",
+        "Prefix Tuning outperformed LoRA on GLUE.",
+    )
+
+    assert result.label is None
+
+
+def test_passive_outperformed_contradicts_reversed_active() -> None:
+    result = inspect_facts(
+        "LoRA was outperformed by Prefix Tuning on GLUE.",
+        "LoRA outperformed Prefix Tuning on GLUE.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+
+
 def test_detects_reversed_achieves_higher_accuracy_comparison() -> None:
     result = inspect_facts(
         "LoRA achieves higher accuracy than Prefix Tuning on GLUE.",
@@ -176,3 +194,13 @@ def test_lower_error_context_mismatch_is_partial_support() -> None:
 
     assert result.label == Label.PARTIALLY_SUPPORTED
     assert any("Comparison context mismatch" in finding for finding in result.findings)
+
+
+def test_lower_error_vs_higher_accuracy_dimension_is_partial_support() -> None:
+    result = inspect_facts(
+        "AlphaModel has lower error than BetaModel on GLUE.",
+        "BetaModel achieves higher accuracy than AlphaModel on GLUE.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert any("Comparison dimension mismatch" in finding for finding in result.findings)

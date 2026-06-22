@@ -18,6 +18,11 @@ COMPARISON_RE = re.compile(
     r"(?P<right>.+?)(?:\.|$)",
     re.IGNORECASE,
 )
+PASSIVE_OUTPERFORMED_RE = re.compile(
+    r"(?P<right>.+?)\s+(?:be|been|being|is|are|was|were)\s+outperformed\s+by\s+"
+    r"(?P<left>.+?)(?:\.|$)",
+    re.IGNORECASE,
+)
 COMPARISON_CONTEXT_PREFIX_RE = re.compile(
     r"^\s*(?:on|in|for)\s+(?P<context>[^,]+),\s*(?P<body>.+)$", re.IGNORECASE
 )
@@ -110,6 +115,11 @@ def _extract_comparison(
     normalize_anchor: AnchorNormalizer,
 ) -> _Comparison | None:
     context, body = _strip_leading_comparison_context(text, material_anchors)
+    passive = _extract_passive_outperformed(
+        body, context, material_anchors, normalize_anchor
+    )
+    if passive:
+        return passive
     match = COMPARISON_RE.search(body)
     if not match:
         return None
@@ -124,6 +134,32 @@ def _extract_comparison(
         return None
     relation = COMPARISON_RELATIONS[match.group("relation").casefold()]
     return _Comparison(left, right, relation, context + suffix_context)
+
+
+def _extract_passive_outperformed(
+    body: str,
+    leading_context: tuple[str, ...],
+    material_anchors: AnchorExtractor,
+    normalize_anchor: AnchorNormalizer,
+) -> _Comparison | None:
+    match = PASSIVE_OUTPERFORMED_RE.search(body)
+    if not match:
+        return None
+    left_text, suffix_context = _split_trailing_comparison_context(
+        match.group("left"), material_anchors
+    )
+    left = _comparison_anchor(left_text, material_anchors)
+    right = _comparison_anchor(match.group("right"), material_anchors)
+    if not left or not right:
+        return None
+    if normalize_anchor(left) == normalize_anchor(right):
+        return None
+    return _Comparison(
+        left,
+        right,
+        COMPARISON_RELATIONS["outperformed"],
+        leading_context + suffix_context,
+    )
 
 
 def _comparison_direction_reversed(
