@@ -13,8 +13,14 @@ AnchorNormalizer = Callable[[str], str]
 
 COMPARISON_RE = re.compile(
     r"(?P<left>.+?)\s+"
-    r"(?P<relation>outperforms|is better than|has higher accuracy than|is superior to)\s+"
+    r"(?P<relation>beats|outperforms|outperformed|exceeds|is better than|is superior to|"
+    r"has higher accuracy than|achieves higher accuracy than|has lower error than)\s+"
     r"(?P<right>.+?)(?:\.|$)",
+    re.IGNORECASE,
+)
+PASSIVE_OUTPERFORMED_RE = re.compile(
+    r"(?P<right>.+?)\s+(?:be|been|being|is|are|was|were)\s+outperformed\s+by\s+"
+    r"(?P<left>.+?)(?:\.|$)",
     re.IGNORECASE,
 )
 COMPARISON_CONTEXT_PREFIX_RE = re.compile(
@@ -27,13 +33,6 @@ COMPARISON_BENCHMARK_PREFIX_RE = re.compile(
 COMPARISON_CONTEXT_SUFFIX_RE = re.compile(
     r"(?P<right>.+?)\s+(?:on|in|for)\s+(?P<context>.+)$", re.IGNORECASE
 )
-COMPARISON_RELATIONS = {
-    "outperforms": "generic",
-    "is better than": "generic",
-    "has higher accuracy than": "higher_accuracy",
-    "is superior to": "generic",
-}
-
 
 @dataclass(frozen=True)
 class ComparisonInspection:
@@ -42,11 +41,30 @@ class ComparisonInspection:
 
 
 @dataclass(frozen=True)
+class _RelationSpec:
+    family: str
+    dimension: str
+
+
+@dataclass(frozen=True)
 class _Comparison:
     left: str
     right: str
-    relation: str
+    relation: _RelationSpec
     context: tuple[str, ...] = ()
+
+
+COMPARISON_RELATIONS = {
+    "beats": _RelationSpec("higher_is_better", "generic"),
+    "outperforms": _RelationSpec("higher_is_better", "generic"),
+    "outperformed": _RelationSpec("higher_is_better", "generic"),
+    "exceeds": _RelationSpec("higher_is_better", "generic"),
+    "is better than": _RelationSpec("higher_is_better", "generic"),
+    "is superior to": _RelationSpec("higher_is_better", "generic"),
+    "has higher accuracy than": _RelationSpec("higher_is_better", "accuracy"),
+    "achieves higher accuracy than": _RelationSpec("higher_is_better", "accuracy"),
+    "has lower error than": _RelationSpec("lower_is_better", "error"),
+}
 
 
 def inspect_comparison_direction(
@@ -66,7 +84,8 @@ def inspect_comparison_direction(
             Label.PARTIALLY_SUPPORTED,
             (
                 "Comparison dimension mismatch: claim "
-                f"{claim_comparison.relation} vs evidence {evidence_comparison.relation}",
+                f"{_relation_label(claim_comparison.relation)} vs evidence "
+                f"{_relation_label(evidence_comparison.relation)}",
             ),
         )
     if not _comparison_contexts_compatible(claim_comparison, evidence_comparison, normalize_anchor):
@@ -96,6 +115,11 @@ def _extract_comparison(
     normalize_anchor: AnchorNormalizer,
 ) -> _Comparison | None:
     context, body = _strip_leading_comparison_context(text, material_anchors)
+    passive = _extract_passive_outperformed(
+        body, context, material_anchors, normalize_anchor
+    )
+    if passive:
+        return passive
     match = COMPARISON_RE.search(body)
     if not match:
         return None
@@ -112,6 +136,32 @@ def _extract_comparison(
     return _Comparison(left, right, relation, context + suffix_context)
 
 
+def _extract_passive_outperformed(
+    body: str,
+    leading_context: tuple[str, ...],
+    material_anchors: AnchorExtractor,
+    normalize_anchor: AnchorNormalizer,
+) -> _Comparison | None:
+    match = PASSIVE_OUTPERFORMED_RE.search(body)
+    if not match:
+        return None
+    left_text, suffix_context = _split_trailing_comparison_context(
+        match.group("left"), material_anchors
+    )
+    left = _comparison_anchor(left_text, material_anchors)
+    right = _comparison_anchor(match.group("right"), material_anchors)
+    if not left or not right:
+        return None
+    if normalize_anchor(left) == normalize_anchor(right):
+        return None
+    return _Comparison(
+        left,
+        right,
+        COMPARISON_RELATIONS["outperformed"],
+        leading_context + suffix_context,
+    )
+
+
 def _comparison_direction_reversed(
     claim: _Comparison,
     evidence: _Comparison,
@@ -121,6 +171,10 @@ def _comparison_direction_reversed(
         normalize_anchor(claim.left) == normalize_anchor(evidence.right)
         and normalize_anchor(claim.right) == normalize_anchor(evidence.left)
     )
+
+
+def _relation_label(relation: _RelationSpec) -> str:
+    return f"{relation.family}/{relation.dimension}"
 
 
 def _same_comparison_pair(

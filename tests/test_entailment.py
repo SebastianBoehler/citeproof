@@ -239,3 +239,21 @@ def test_negation_contradiction_outranks_partial_fact_inspection() -> None:
     )
 
     assert judgment.label == Label.CONTRADICTED
+
+
+def test_reversed_beats_comparison_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "LoRA beats Prefix Tuning on GLUE.",
+        "Prefix Tuning beats LoRA on GLUE.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+
+
+def test_lower_error_context_mismatch_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "LoRA has lower error than Prefix Tuning on GLUE.",
+        "Prefix Tuning has lower error than LoRA on SQuAD.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED

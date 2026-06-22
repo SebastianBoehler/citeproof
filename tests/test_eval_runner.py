@@ -97,6 +97,7 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
         "metric-cross-contradiction",
         "material-anchor-swap",
         "comparison-direction-swap",
+        "comparison-beats-swap",
     } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)

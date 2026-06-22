@@ -14,8 +14,8 @@ measure changes before building editor or SaaS surfaces.
 - Align source files to BibTeX keys by title overlap when filenames are paper titles.
 - Retrieve citation-scoped evidence snippets.
 - Split compound claims into context-preserving atoms for coverage checks.
-- Apply deterministic fact lenses for material anchors, comparison direction,
-  numbers, years, hedging, scope gaps, and selected negation risks.
+- Apply deterministic fact lenses for material anchors, comparison direction and
+  wording variants, numbers, years, hedging, scope gaps, and selected negation risks.
 - Label claims as `supported`, `partially_supported`, `contradicted`,
   `unsupported`, or `uncertain`.
 - Check LaTeX citation keys against BibTeX entries and required fields.
