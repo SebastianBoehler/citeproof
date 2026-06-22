@@ -50,3 +50,13 @@ def test_numeric_confidence_interval_conflict_is_not_supported() -> None:
 
     assert judgment.label == Label.CONTRADICTED
     assert judgment.failure_mode == FailureMode.ENTITY_CONFLICT
+
+
+def test_ratio_effect_conflict_maps_to_numeric_failure() -> None:
+    judgment = adjudicate_evidence(
+        "The treatment hazard ratio is below 1.",
+        "The treatment hazard ratio was 1.20.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+    assert judgment.failure_mode == FailureMode.NUMERIC_CONFLICT

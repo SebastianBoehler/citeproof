@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from citeproof.confidence_interval_lens import inspect_confidence_interval_conflicts
 from citeproof.pvalue_lens import inspect_p_value_conflicts
+from citeproof.ratio_effect_lens import inspect_ratio_effect_conflicts
 
 CONTEXT_STOPWORDS = {
     "an",
@@ -111,6 +112,7 @@ def inspect_statistical_conflicts(claim: str, evidence: str) -> tuple[str, ...]:
     findings: list[str] = []
     findings.extend(inspect_p_value_conflicts(claim, evidence, context_overlaps))
     findings.extend(inspect_confidence_interval_conflicts(claim, evidence, context_overlaps))
+    findings.extend(inspect_ratio_effect_conflicts(claim, evidence, context_overlaps))
     for group in GROUPS:
         claim_values = set(_mentioned_values(group, claim))
         evidence_values = set(_mentioned_values(group, evidence))

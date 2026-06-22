@@ -109,7 +109,12 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
     text = " ".join(facts.findings).lower()
     if "year conflict" in text:
         return FailureMode.YEAR_CONFLICT
-    if "numeric conflict" in text or "numeric bound conflict" in text or "p-value conflict" in text:
+    if (
+        "numeric conflict" in text
+        or "numeric bound conflict" in text
+        or "p-value conflict" in text
+        or "ratio effect conflict" in text
+    ):
         return FailureMode.NUMERIC_CONFLICT
     if "unit conflict" in text:
         return FailureMode.UNIT_CONFLICT

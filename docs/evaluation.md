@@ -12,7 +12,7 @@ Current local scores after the strict verifier v2 high-recall evidence updates:
 | Benchmark | Total | Accuracy | Macro-F1 | False-Supported Rate |
 | --- | ---: | ---: | ---: | ---: |
 | `examples/claim_support.jsonl` | 4 | 1.0 | 0.8 | 0.0 |
-| `examples/edge_cases/claim_support.jsonl` | 118 | 1.0 | 0.8 | 0.0 |
+| `examples/edge_cases/claim_support.jsonl` | 120 | 1.0 | 0.8 | 0.0 |
 | `examples/hallucination` draft eval | 5 | 1.0 | 0.8 | 0.0 |
 
 These benchmarks are intentionally small and adversarial. They cover basic
@@ -24,6 +24,7 @@ qualitative scope conflicts, significance negations, requirement negations, desc
 controlled attribute conflicts, method-design attribute conflicts, entity swaps,
 technical property conflicts, statistical reporting conflicts, claim-strength overstatements,
 causal-design support calibration, p-value/significance conflicts, numeric confidence intervals,
+ratio-effect null conflicts,
 assertion-status tensions, role/provenance binding conflicts, tie-comparison tensions,
 context-limitation tensions, component-exclusion conflicts,
 outcome-status conflicts, mixed-effect tensions, protocol/measurement-slot conflicts,

@@ -172,6 +172,60 @@ def test_ignores_matching_numeric_ci_relation() -> None:
     assert not any("Confidence interval conflict" in finding for finding in findings)
 
 
+def test_detects_ratio_point_estimate_direction_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment hazard ratio is below 1.",
+        "The treatment hazard ratio was 1.20.",
+    )
+
+    assert any("Ratio effect conflict" in finding for finding in findings)
+
+
+def test_detects_ratio_point_estimate_opposite_direction_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment hazard ratio is above 1.",
+        "The treatment hazard ratio was 0.80.",
+    )
+
+    assert any("Ratio effect conflict" in finding for finding in findings)
+
+
+def test_detects_ratio_ci_null_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The odds ratio excludes the null value.",
+        "The odds ratio was 0.82 with 95% CI [0.60, 1.12].",
+    )
+
+    assert any("Ratio effect conflict" in finding for finding in findings)
+
+
+def test_detects_ratio_ci_excludes_null_against_includes_claim() -> None:
+    findings = inspect_statistical_conflicts(
+        "The risk ratio includes the null value.",
+        "The risk ratio was 0.82 with 95% CI [0.70, 0.96].",
+    )
+
+    assert any("Ratio effect conflict" in finding for finding in findings)
+
+
+def test_ratio_ci_crossing_null_conflicts_with_significance() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment hazard ratio is statistically significant.",
+        "The treatment hazard ratio was 0.82 with 95% CI [0.60, 1.12].",
+    )
+
+    assert any("Ratio effect conflict" in finding for finding in findings)
+
+
+def test_ignores_matching_ratio_relation() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment hazard ratio is below 1.",
+        "The treatment hazard ratio was 0.82.",
+    )
+
+    assert not any("Ratio effect conflict" in finding for finding in findings)
+
+
 def test_ignores_evidence_with_claim_value_plus_extra_value() -> None:
     findings = inspect_statistical_conflicts(
         "The paper reports median latency.",
