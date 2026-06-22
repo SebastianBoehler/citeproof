@@ -12,7 +12,7 @@ Current local scores after the strict verifier v2 high-recall evidence updates:
 | Benchmark | Total | Accuracy | Macro-F1 | False-Supported Rate |
 | --- | ---: | ---: | ---: | ---: |
 | `examples/claim_support.jsonl` | 4 | 1.0 | 0.8 | 0.0 |
-| `examples/edge_cases/claim_support.jsonl` | 33 | 1.0 | 0.8 | 0.0 |
+| `examples/edge_cases/claim_support.jsonl` | 40 | 1.0 | 0.8 | 0.0 |
 | `examples/hallucination` draft eval | 5 | 1.0 | 0.8 | 0.0 |
 
 These benchmarks are intentionally small and adversarial. They cover basic
@@ -20,8 +20,10 @@ support, contradiction, partial support, source silence, numeric conflicts,
 temporal conflicts, material anchor swaps, comparison-direction swaps,
 comparison wording variants, compact quantity conflicts, resource-efficiency paraphrases, hedged
 evidence, explicit negation conflicts, directional change conflicts, numeric bound conflicts,
+qualitative scope conflicts, significance negations, requirement negations, descriptor swaps,
 entity swaps, compound claims, failure-mode classification, and bibliography-gated
-hallucination checks.
+hallucination checks. Passing these suites means the current curated cases are saturated; it
+does not establish general 100% citation-verification accuracy on unseen papers.
 
 ## Reading Scores
 
