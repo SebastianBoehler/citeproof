@@ -171,6 +171,17 @@ def test_different_comparison_context_is_partial_support() -> None:
     assert any("Comparison context mismatch" in finding for finding in result.findings)
 
 
+def test_qualified_comparison_context_is_partial_support() -> None:
+    result = inspect_facts(
+        "LoRA outperforms Prefix Tuning on low-resource GLUE.",
+        "Prefix Tuning outperforms LoRA on high-resource GLUE.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert any("Comparison context mismatch" in finding for finding in result.findings)
+    assert not any("Comparison direction conflict" in finding for finding in result.findings)
+
+
 def test_comparison_context_mismatch_outranks_entity_conflict() -> None:
     result = inspect_facts(
         "LoRA outperforms Prefix Tuning on GLUE.",

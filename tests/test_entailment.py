@@ -183,6 +183,17 @@ def test_reversed_comparison_with_different_context_is_not_supported() -> None:
     assert judgment.label == Label.PARTIALLY_SUPPORTED
 
 
+def test_reversed_comparison_with_qualified_context_is_not_contradicted() -> None:
+    judgment = judge_evidence(
+        "LoRA outperforms Prefix Tuning on low-resource GLUE.",
+        "Prefix Tuning outperforms LoRA on high-resource GLUE.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+    assert "Comparison context mismatch" in judgment.reason
+    assert "Comparison direction conflict" not in judgment.reason
+
+
 def test_reversed_comparison_context_mismatch_outranks_entity_conflict() -> None:
     judgment = judge_evidence(
         "LoRA outperforms Prefix Tuning on GLUE.",

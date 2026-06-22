@@ -169,7 +169,14 @@ def _context_anchors(text: str, material_anchors: AnchorExtractor) -> tuple[str,
     stripped = text.strip(" .,;:()[]{}")
     if not stripped:
         return ()
-    return material_anchors(stripped) or (stripped,)
+    anchors = material_anchors(stripped)
+    if len(anchors) == 1 and _normalize_context_key(anchors[0]) == _normalize_context_key(stripped):
+        return anchors
+    return (stripped,)
+
+
+def _normalize_context_key(text: str) -> str:
+    return re.sub(r"\s+", " ", text.casefold()).strip()
 
 
 def _comparison_anchor(text: str, material_anchors: AnchorExtractor) -> str | None:
