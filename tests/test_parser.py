@@ -1,4 +1,5 @@
-from citeproof.parser import extract_citation_keys, parse_claims
+from citeproof.models import Claim
+from citeproof.parser import extract_citation_keys, parse_claims, split_citation_clauses
 
 
 def test_extracts_latex_citations() -> None:
@@ -32,6 +33,73 @@ def test_parse_claims_splits_explicit_citation_clauses() -> None:
         "Method X improves turn taking.",
         "Method Y reduces latency.",
     ]
+
+
+def test_parse_claims_splits_comma_while_citation_clauses() -> None:
+    claims = parse_claims(
+        "LoRA improves accuracy on GLUE \\cite{lora2021}, "
+        "while Prefix Tuning improves accuracy on SQuAD \\cite{prefix2021}."
+    )
+
+    assert claims == [
+        Claim("LoRA improves accuracy on GLUE.", ("lora2021",)),
+        Claim("Prefix Tuning improves accuracy on SQuAD.", ("prefix2021",)),
+    ]
+
+
+def test_parse_claims_splits_comma_but_citation_clauses() -> None:
+    claims = parse_claims(
+        "LoRA improves accuracy on GLUE \\cite{lora2021}, "
+        "but Prefix Tuning improves accuracy on SQuAD \\cite{prefix2021}."
+    )
+
+    assert claims == [
+        Claim("LoRA improves accuracy on GLUE.", ("lora2021",)),
+        Claim("Prefix Tuning improves accuracy on SQuAD.", ("prefix2021",)),
+    ]
+
+
+def test_parse_claims_splits_comma_whereas_citation_clauses() -> None:
+    claims = parse_claims(
+        "LoRA improves accuracy on GLUE \\cite{lora2021}, "
+        "whereas Prefix Tuning improves accuracy on SQuAD \\cite{prefix2021}."
+    )
+
+    assert claims == [
+        Claim("LoRA improves accuracy on GLUE.", ("lora2021",)),
+        Claim("Prefix Tuning improves accuracy on SQuAD.", ("prefix2021",)),
+    ]
+
+
+def test_parse_claims_splits_comma_and_citation_clauses() -> None:
+    claims = parse_claims(
+        "LoRA improves accuracy on GLUE \\cite{lora2021}, "
+        "and Prefix Tuning improves accuracy on SQuAD \\cite{prefix2021}."
+    )
+
+    assert claims == [
+        Claim("LoRA improves accuracy on GLUE.", ("lora2021",)),
+        Claim("Prefix Tuning improves accuracy on SQuAD.", ("prefix2021",)),
+    ]
+
+
+def test_split_citation_clauses_requires_citations_on_both_sides() -> None:
+    clauses = split_citation_clauses(
+        "LoRA improves accuracy on GLUE \\cite{lora2021}, while the baseline is unchanged."
+    )
+
+    assert clauses == [
+        "LoRA improves accuracy on GLUE \\cite{lora2021}, while the baseline is unchanged."
+    ]
+
+
+def test_split_citation_clauses_keeps_sentence_when_middle_piece_is_uncited() -> None:
+    sentence = (
+        "LoRA improves accuracy on GLUE \\cite{lora2021}, while the baseline is unchanged, "
+        "and Prefix Tuning improves accuracy on SQuAD \\cite{prefix2021}."
+    )
+
+    assert split_citation_clauses(sentence) == [sentence]
 
 
 def test_parse_claims_drops_latex_tables_and_comments() -> None:
