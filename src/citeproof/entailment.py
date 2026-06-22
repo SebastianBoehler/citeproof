@@ -6,6 +6,7 @@ import re
 
 from citeproof.fact_lenses import inspect_facts
 from citeproof.models import EvidenceJudgment, Label
+from citeproof.quantities import quantity_mentions
 from citeproof.text import token_overlap_ratio
 
 POSITIVE_CLAIM_RE = re.compile(
@@ -33,12 +34,6 @@ NEGATIVE_CLAIM_RE = re.compile(
 )
 POSITIVE_EVIDENCE_RE = re.compile(
     r"\b(significantly improves|outperforms|improves|improved|higher than|better than|superior to)\b",
-    re.IGNORECASE,
-)
-NUMBER_RE = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:[,.]\d+)*(?:\.\d+)?%?")
-NUMBER_WITH_UNIT_RE = re.compile(
-    r"(?<![A-Za-z])(?P<number>[-+]?\d+(?:[,.]\d+)*(?:\.\d+)?)(?P<percent>%| percent)?"
-    r"(?:\s+(?P<unit>[A-Za-z][A-Za-z-]*))?",
     re.IGNORECASE,
 )
 UNIVERSAL_CLAIM_RE = re.compile(r"\b(all|always|any|every|universally)\b", re.IGNORECASE)
@@ -183,13 +178,16 @@ def _normalize_metric(metric: str) -> str:
 
 
 def _has_numeric_conflict(claim: str, evidence: str) -> bool:
-    claim_mentions = _number_mentions(claim)
-    evidence_mentions = _number_mentions(evidence)
+    claim_mentions = quantity_mentions(claim)
+    evidence_mentions = quantity_mentions(evidence)
     if len(claim_mentions) != 1 or len(evidence_mentions) != 1:
         return False
-    claim_number, claim_unit = claim_mentions[0]
-    evidence_number, evidence_unit = evidence_mentions[0]
-    return bool(claim_unit and claim_unit == evidence_unit and claim_number != evidence_number)
+    claim_mention = claim_mentions[0]
+    evidence_mention = evidence_mentions[0]
+    return (
+        claim_mention.unit == evidence_mention.unit
+        and claim_mention.number != evidence_mention.number
+    )
 
 
 def _has_scope_gap(claim: str, evidence: str) -> bool:
@@ -285,11 +283,3 @@ def _has_nearby_match(
         for left in left_matches
         for right in right_matches
     )
-
-
-def _number_mentions(text: str) -> list[tuple[str, str]]:
-    mentions = []
-    for match in NUMBER_WITH_UNIT_RE.finditer(text):
-        unit = match.group("percent") or match.group("unit") or ""
-        mentions.append((match.group("number").replace(",", ""), unit.lower()))
-    return mentions
