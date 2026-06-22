@@ -55,10 +55,37 @@ def test_detects_availability_conflict() -> None:
     assert any("Availability conflict" in finding for finding in findings)
 
 
+def test_detects_delayed_availability_negation() -> None:
+    findings = inspect_attribute_conflicts(
+        "The dataset is publicly available.",
+        "The dataset is not yet publicly available.",
+    )
+
+    assert any("Availability conflict" in finding for finding in findings)
+
+
 def test_ignores_different_contexts() -> None:
     findings = inspect_attribute_conflicts(
         "The image dataset is publicly available.",
         "The text baseline is private.",
+    )
+
+    assert findings == ()
+
+
+def test_ignores_evidence_with_claim_value_plus_extra_value() -> None:
+    findings = inspect_attribute_conflicts(
+        "The dataset contains images.",
+        "The dataset contains images and text captions.",
+    )
+
+    assert findings == ()
+
+
+def test_ignores_ordinary_table_reference() -> None:
+    findings = inspect_attribute_conflicts(
+        "The dataset contains images.",
+        "Table 1 reports that the dataset contains images.",
     )
 
     assert findings == ()

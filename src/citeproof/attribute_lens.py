@@ -22,7 +22,7 @@ GROUPS = (
             ("text", (r"\btexts?\b", r"\btextual\b")),
             ("audio", (r"\baudio\b", r"\bspeech\b")),
             ("video", (r"\bvideos?\b",)),
-            ("tabular", (r"\btabular\b", r"\btables?\b")),
+            ("tabular", (r"\btabular\b", r"\btable\s+data\b")),
         ),
     ),
     AttributeGroup(
@@ -68,10 +68,14 @@ GROUPS = (
     AttributeGroup(
         "Availability",
         (
-            ("public", (r"(?<!not\s)\bpublicly\s+available\b", r"\bopen\s+source\b")),
+            ("public", (r"\bpublicly\s+available\b", r"\bopen\s+source\b")),
             (
                 "private",
-                (r"\bnot\s+publicly\s+available\b", r"\bprivate\b", r"\bproprietary\b"),
+                (
+                    r"\bnot(?:\s+\w+){0,3}\s+publicly\s+available\b",
+                    r"\bprivate\b",
+                    r"\bproprietary\b",
+                ),
             ),
         ),
     ),
@@ -95,12 +99,12 @@ def inspect_attribute_conflicts(claim: str, evidence: str) -> tuple[str, ...]:
 
     findings: list[str] = []
     for group in GROUPS:
-        claim_values = _mentioned_values(group, claim)
-        evidence_values = _mentioned_values(group, evidence)
+        claim_values = set(_mentioned_values(group, claim))
+        evidence_values = set(_mentioned_values(group, evidence))
+        if not claim_values or not evidence_values or claim_values & evidence_values:
+            continue
         for claim_value in claim_values:
             for evidence_value in evidence_values:
-                if claim_value == evidence_value:
-                    continue
                 if _context_overlaps(claim, evidence):
                     findings.append(
                         f"{group.label} conflict: claim says {claim_value} "
@@ -114,6 +118,8 @@ def _mentioned_values(group: AttributeGroup, text: str) -> tuple[str, ...]:
     for value, patterns in group.values:
         if any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns):
             values.append(value)
+    if group.label == "Availability" and "private" in values:
+        values = [value for value in values if value != "public"]
     return tuple(values)
 
 
