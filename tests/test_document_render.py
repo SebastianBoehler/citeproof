@@ -20,6 +20,7 @@ def test_render_audit_document_preserves_latex_sections_and_citations() -> None:
     assert '<h2 class="doc-heading">Method</h2>' in html
     assert "Adaptive replay improves sample efficiency" in html
     assert 'data-index="0"' in html
+    assert 'class="doc-paragraph annotated' not in html
     assert "jones2023adaptive" in html
 
 
@@ -44,11 +45,11 @@ def test_render_audit_document_does_not_bind_reused_key_to_unrelated_paragraph()
 
     html = render_audit_document(source, results)
 
-    assert html.count('data-claim="0"') == 1
-    assert html.count('data-claim="1"') == 1
+    assert html.count('data-index="0"') == 2
+    assert html.count('data-index="1"') == 2
 
 
-def test_render_audit_document_marks_multiple_claims_in_one_paragraph() -> None:
+def test_render_audit_document_uses_inline_markers_for_multiple_claims() -> None:
     source = r"""
     Adaptive replay improves sample efficiency \cite{jones2023}.
     Method X outperforms PPO \cite{smith2024}.
@@ -68,10 +69,11 @@ def test_render_audit_document_marks_multiple_claims_in_one_paragraph() -> None:
 
     html = render_audit_document(source, results)
 
-    assert "multi-annotated" in html
-    assert html.count('class="claim-span annotated') == 2
-    assert html.count('data-claim="0"') == 1
-    assert html.count('data-claim="1"') == 1
+    assert "multi-annotated" not in html
+    assert 'class="claim-span annotated' not in html
+    assert html.count('class="doc-paragraph"') == 1
+    assert html.count('data-index="0"') == 2
+    assert html.count('data-index="1"') == 2
 
 
 def test_render_audit_document_falls_back_without_source_text() -> None:

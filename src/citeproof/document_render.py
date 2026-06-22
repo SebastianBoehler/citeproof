@@ -111,15 +111,10 @@ def _annotated_paragraph(
 ) -> str:
     if len(claim_indices) > 1:
         return _multi_claim_paragraph(text, claim_indices, claim_results)
-    first = claim_indices[0]
     citation_map = _citation_index_map(claim_indices, claim_results)
     rendered = _render_inline(text, citation_map, claim_results)
     badges = _claim_badges(claim_indices, claim_results)
-    status = _label_class(claim_results[first])
-    return (
-        f'<p class="doc-paragraph annotated status-{status}" data-claim="{first}">'
-        f"{rendered} {badges}</p>"
-    )
+    return f'<p class="doc-paragraph">{rendered} {badges}</p>'
 
 
 def _multi_claim_paragraph(
@@ -133,16 +128,11 @@ def _multi_claim_paragraph(
         if not indices:
             parts.append(_render_inline(sentence, {}, claim_results))
             continue
-        first = indices[0]
         citation_map = _citation_index_map(indices, claim_results)
         rendered = _render_inline(sentence, citation_map, claim_results)
         badges = _claim_badges(indices, claim_results)
-        status = _label_class(claim_results[first])
-        parts.append(
-            f'<span class="claim-span annotated status-{status}" data-claim="{first}">'
-            f"{rendered} {badges}</span>"
-        )
-    return f'<p class="doc-paragraph multi-annotated">{" ".join(part for part in parts if part.strip())}</p>'
+        parts.append(f"{rendered} {badges}")
+    return f'<p class="doc-paragraph">{" ".join(part for part in parts if part.strip())}</p>'
 
 
 def _result_indices_for_fragment(

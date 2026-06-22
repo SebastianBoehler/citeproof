@@ -149,7 +149,7 @@ h1 {{ margin: 0 0 6px; font-size: 25px; line-height: 1.2; }}
   cursor: pointer;
 }}
 .annotated.active {{ border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12); }}
-.claim-span.annotated {{ display: inline; position: static; border: 0; border-radius: 5px; padding: 2px 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }}
+.cite.active, .mini-badge.active {{ outline: 2px solid rgba(29, 78, 216, 0.45); outline-offset: 2px; }}
 .status-supported {{ border-left-color: var(--supported); background: #f3fbf7; }}
 .status-partially_supported {{ border-left-color: var(--partial); background: #fff8eb; }}
 .status-contradicted {{ border-left-color: var(--bad); background: #fff5f4; }}
@@ -157,7 +157,7 @@ h1 {{ margin: 0 0 6px; font-size: 25px; line-height: 1.2; }}
 .claim-top, .claim-bottom {{ display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }}
 .line {{ color: var(--muted); font-size: 12px; }}
 .inline-cite {{ transform: translateY(-1px); }}
-.annotation-badges {{ display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }}
+.annotation-badges {{ display: inline-flex; gap: 4px; margin: 0 6px; vertical-align: middle; }}
 .mini-badge {{ border: 0; cursor: pointer; min-height: 21px; padding: 4px 7px; }}
 .inspector {{
   position: sticky;
@@ -250,13 +250,18 @@ function renderFilters() {{
 }}
 function renderPaper() {{
   document.getElementById("paper").innerHTML = payload.documentHtml || '<p>No paper text available.</p>';
-  document.querySelectorAll(".annotated, .cite, .mini-badge").forEach((node) => node.addEventListener("click", (event) => {{
+  document.querySelectorAll("#paper .annotated, #paper .cite, #paper .mini-badge").forEach((node) => node.addEventListener("click", (event) => {{
     event.stopPropagation();
     select(Number(node.dataset.claim ?? node.dataset.index));
   }}));
-  document.querySelectorAll(".annotated").forEach((node) => {{
+  document.querySelectorAll("#paper .annotated").forEach((node) => {{
     const index = Number(node.dataset.claim);
     node.hidden = filter !== "all" && payload.results[index]?.label !== filter;
+    node.classList.toggle("active", index === active);
+  }});
+  document.querySelectorAll("#paper .cite, #paper .mini-badge").forEach((node) => {{
+    const index = Number(node.dataset.index);
+    if (Number.isFinite(index)) node.hidden = filter !== "all" && payload.results[index]?.label !== filter;
     node.classList.toggle("active", index === active);
   }});
 }}
@@ -286,12 +291,7 @@ function renderInspector() {{
     <div class="panel"><h3>Evidence Snippets</h3>${{evidence || "<p>No evidence spans were selected.</p>"}}</div>
     <div class="panel"><h3>Atomic Checks</h3><table><thead><tr><th>Label</th><th>Atom</th><th>Failure</th></tr></thead><tbody>${{atoms || '<tr><td colspan="3">No atom trace available.</td></tr>'}}</tbody></table></div>`;
 }}
-function render() {{
-  renderStats();
-  renderFilters();
-  renderPaper();
-  renderInspector();
-}}
+function render() {{ renderStats(); renderFilters(); renderPaper(); renderInspector(); }}
 render();
 </script>
 </body>
