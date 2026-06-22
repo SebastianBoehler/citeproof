@@ -43,6 +43,7 @@ uv run citeproof verify examples/draft.md --sources examples/sources
 uv run citeproof eval examples/claim_support.jsonl
 uv run citeproof eval examples/edge_cases/claim_support.jsonl \
   --details-output reports/edge_cases_heuristic.json
+uv run citeproof eval-suite examples/eval_suite.json
 uv run citeproof eval-draft examples/hallucination/draft.md \
   --sources examples/hallucination/sources \
   --bib examples/hallucination/references.bib \
@@ -150,6 +151,8 @@ claim failed.
 
 The most important product metric is false-supported rate: cases where the
 system says `supported` while the expected label is anything else.
+Use `eval-suite` for CI and private held-out benchmarks because it reports
+aggregate metrics and fails when reliability gates are violated.
 
 ## Check Modes
 
@@ -160,4 +163,5 @@ CiteProof exposes checks as separate commands rather than one loose mode flag:
 - Source mode: `verify-paper --bib ... --sources ...` gates local PDFs/text files through the bibliography.
 - Claim mode: `verify` checks citation-bearing claims against loaded sources.
 - Strict mode: `verify-paper` combines bibliography, source, retrieval, fact-lens, and optional NLI checks.
-- Benchmark mode: `eval` and `eval-draft` report `accuracy`, `macro_f1`, `false_supported_rate`, and per-case failures.
+- Benchmark mode: `eval`, `eval-draft`, and `eval-suite` report `accuracy`,
+  `macro_f1`, `false_supported_rate`, and per-case or suite-level failures.

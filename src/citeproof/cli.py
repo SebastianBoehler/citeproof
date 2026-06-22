@@ -58,6 +58,17 @@ def _run_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_eval_suite(args: argparse.Namespace) -> int:
+    from citeproof.evals.suite import run_eval_suite, suite_passed
+
+    report = run_eval_suite(args.manifest, judge=_make_judge(args))
+    text = json.dumps(report, indent=2, sort_keys=True)
+    if args.json_output:
+        _write_text(args.json_output, text)
+    print(text)
+    return 0 if suite_passed(report) else 2
+
+
 def _run_eval_draft(args: argparse.Namespace) -> int:
     result = run_draft_eval(args.draft, args.sources, args.expected, args.bib)
     print(result["summary"])
@@ -188,6 +199,15 @@ def _build_parser() -> argparse.ArgumentParser:
     eval_parser.add_argument("--details-output")
     _add_verifier_args(eval_parser)
     eval_parser.set_defaults(func=_run_eval)
+
+    eval_suite = subparsers.add_parser(
+        "eval-suite",
+        help="Run a manifest of claim-support eval datasets.",
+    )
+    eval_suite.add_argument("manifest")
+    eval_suite.add_argument("--json-output")
+    _add_verifier_args(eval_suite)
+    eval_suite.set_defaults(func=_run_eval_suite)
 
     eval_draft = subparsers.add_parser("eval-draft", help="Evaluate draft labels against JSONL.")
     eval_draft.add_argument("draft")

@@ -25,6 +25,8 @@ jobs:
         run: uv run --extra dev pytest
       - name: Run sample eval
         run: uv run citeproof eval examples/claim_support.jsonl
+      - name: Run eval suite
+        run: uv run citeproof eval-suite examples/eval_suite.json
       - name: Run hallucination eval
         run: |
           uv run citeproof eval-draft examples/hallucination/draft.md \

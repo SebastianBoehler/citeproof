@@ -1,0 +1,22 @@
+{
+  "datasets": [
+    {
+      "name": "primary",
+      "path": "claim_support.jsonl",
+      "split": "curated"
+    },
+    {
+      "name": "edge",
+      "path": "edge_cases/claim_support.jsonl",
+      "split": "adversarial"
+    }
+  ],
+  "gates": {
+    "max_false_supported_rate": 0.0,
+    "min_accuracy": 1.0,
+    "max_manual_review_rate": 0.35,
+    "min_supported_precision": 1.0,
+    "min_contradiction_recall": 1.0,
+    "min_unsupported_recall": 1.0
+  }
+}

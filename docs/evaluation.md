@@ -31,6 +31,21 @@ hallucination checks. Passing these suites means the current
 curated cases are saturated; it does not establish general 100% citation-verification accuracy on
 unseen papers.
 
+## Suite Gates
+
+Use `eval-suite` when comparing multiple benchmark files or running private
+held-out cases:
+
+```bash
+uv run citeproof eval-suite examples/eval_suite.json
+```
+
+The suite manifest resolves dataset paths relative to the manifest file. The
+committed suite gates aggregate direct claim-support metrics across the primary
+and edge datasets and currently require `false_supported_rate = 0.0`.
+Private real-paper suites should use the same JSONL row format and a separate
+manifest that is not committed when source text cannot be redistributed.
+
 ## Reading Scores
 
 - `false_supported_rate`: share of all eval cases where a non-supported expected
