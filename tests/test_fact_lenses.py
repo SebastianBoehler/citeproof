@@ -22,10 +22,10 @@ def test_detects_unit_conflict_for_same_number() -> None:
     assert any("Unit conflict" in finding for finding in result.findings)
 
 
-def test_does_not_flag_unit_conflict_when_units_overlap() -> None:
+def test_does_not_flag_unit_overlap_as_conflict() -> None:
     result = inspect_facts(
         "The evaluation used 42 percent of the dataset.",
-        "The evaluation used 42 percent of the dataset, or 42 examples.",
+        "The evaluation used 42 percent of the dataset, corresponding to 42 examples.",
     )
 
     assert result.label != Label.CONTRADICTED

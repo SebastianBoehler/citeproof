@@ -2,6 +2,8 @@ from pathlib import Path
 
 from citeproof.evals.runner import run_eval_cases, run_eval_file
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 def test_eval_runner_reports_false_supported_rate(tmp_path: Path) -> None:
     dataset = tmp_path / "eval.jsonl"
@@ -84,3 +86,14 @@ def test_eval_cases_assert_optional_expected_failure_mode(tmp_path: Path) -> Non
         ("unit_conflict", "unit_conflict", True, True),
         ("negation_conflict", "unit_conflict", False, False),
     ]
+
+
+def test_edge_cases_with_expected_failure_modes_pass() -> None:
+    cases = run_eval_cases(REPO_ROOT / "examples/edge_cases/claim_support.jsonl")
+    mode_cases = [case for case in cases if "expected_failure_mode" in case]
+
+    assert {"source-silence-related", "metric-cross-contradiction"} <= {
+        case["id"] for case in mode_cases
+    }
+    assert all(case["failure_mode_pass"] for case in mode_cases)
+    assert all(case["pass"] for case in mode_cases)
