@@ -101,6 +101,17 @@ uv run citeproof verify-paper path/to/paper.tex \
 Override the local NLI model with `--nli-model` or `NLI_MODEL_ID`. Override
 device selection with `CITEPROOF_DEVICE=cpu|cuda|mps`.
 
+The same verifier flag is available for draft evaluation:
+
+```bash
+CITEPROOF_DEVICE=cpu \
+uv run citeproof eval-draft examples/hallucination/draft.md \
+  --sources examples/hallucination/sources \
+  --bib examples/hallucination/references.bib \
+  --expected examples/hallucination/expected.jsonl \
+  --verifier nli
+```
+
 Generate HALLMARK prediction JSONL for bibliography hallucination scoring:
 
 ```bash

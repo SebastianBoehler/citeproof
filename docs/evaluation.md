@@ -68,6 +68,10 @@ manifest that is not committed when source text cannot be redistributed.
 - Direct `eval` per-case reports include `id`, `expected_label`, `predicted_label`,
   `confidence`, `false_supported`, `pass`, `reason`, and `failure_mode` when
   the verifier can assign a stable failure category.
+- Draft `eval-draft` details include retrieval trace diagnostics:
+  `source_gate_status`, `candidate_count`, `support_candidate_count`,
+  `contradiction_candidate_count`, `best_support_rank`, and
+  `best_contradiction_rank`.
 
 Run the current checks:
 

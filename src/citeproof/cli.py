@@ -70,7 +70,13 @@ def _run_eval_suite(args: argparse.Namespace) -> int:
 
 
 def _run_eval_draft(args: argparse.Namespace) -> int:
-    result = run_draft_eval(args.draft, args.sources, args.expected, args.bib)
+    result = run_draft_eval(
+        args.draft,
+        args.sources,
+        args.expected,
+        args.bib,
+        judge=_make_judge(args),
+    )
     print(result["summary"])
     if args.details_output:
         import json
@@ -215,6 +221,7 @@ def _build_parser() -> argparse.ArgumentParser:
     eval_draft.add_argument("--expected", required=True)
     eval_draft.add_argument("--bib")
     eval_draft.add_argument("--details-output")
+    _add_verifier_args(eval_draft)
     eval_draft.set_defaults(func=_run_eval_draft)
 
     bib = subparsers.add_parser("verify-bib", help="Verify LaTeX citation keys against BibTeX.")
