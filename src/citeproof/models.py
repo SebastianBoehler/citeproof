@@ -26,6 +26,23 @@ class Claim:
 
 
 @dataclass(frozen=True)
+class AtomicClaim:
+    """A smaller checkable claim with original local context preserved."""
+
+    text: str
+    context: str
+    citation_keys: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ClaimGroup:
+    """A parsed claim and its atomic subclaims."""
+
+    original: Claim
+    atoms: tuple[AtomicClaim, ...]
+
+
+@dataclass(frozen=True)
 class Source:
     """A loaded source document."""
 
