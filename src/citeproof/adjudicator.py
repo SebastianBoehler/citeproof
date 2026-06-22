@@ -126,6 +126,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         return FailureMode.NEGATION_CONFLICT
     if "negation conflict" in text or "direction conflict" in text:
         return FailureMode.NEGATION_CONFLICT
+    if "overhead conflict" in text:
+        return FailureMode.NEGATION_CONFLICT
     if "entity conflict" in text:
         return FailureMode.ENTITY_CONFLICT
     if "availability conflict" in text:

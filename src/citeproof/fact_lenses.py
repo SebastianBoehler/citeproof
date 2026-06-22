@@ -17,6 +17,7 @@ from citeproof.qualitative_lens import (
 )
 from citeproof.quantities import QuantityMention, numbers_to_units, quantity_mentions
 from citeproof.statistical_lens import inspect_statistical_conflicts
+from citeproof.strength_lens import inspect_strength_conflicts, inspect_strength_tensions
 from citeproof.technical_property_lens import inspect_technical_property_conflicts
 from citeproof.text import token_overlap_ratio
 
@@ -80,6 +81,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + list(inspect_attribute_conflicts(claim, evidence))
         + list(inspect_technical_property_conflicts(claim, evidence))
         + list(inspect_statistical_conflicts(claim, evidence))
+        + list(inspect_strength_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)
@@ -91,6 +93,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
     tension_findings = (
         inspect_negation_and_comparator_tensions(claim, evidence)
         + inspect_qualitative_tensions(claim, evidence)
+        + inspect_strength_tensions(claim, evidence)
     )
     if tension_findings:
         return FactInspection(Label.PARTIALLY_SUPPORTED, tension_findings)
