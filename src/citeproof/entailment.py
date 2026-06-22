@@ -24,7 +24,12 @@ POSITIVE_EVIDENCE_RE = re.compile(
     r"\b(significantly improves|outperforms|improves|improved|higher than|better than|superior to)\b",
     re.IGNORECASE,
 )
-NUMBER_RE = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?%?")
+NUMBER_RE = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:[,.]\d+)*(?:\.\d+)?%?")
+NUMBER_WITH_UNIT_RE = re.compile(
+    r"(?<![A-Za-z])(?P<number>[-+]?\d+(?:[,.]\d+)*(?:\.\d+)?)(?P<percent>%| percent)?"
+    r"(?:\s+(?P<unit>[A-Za-z][A-Za-z-]*))?",
+    re.IGNORECASE,
+)
 UNIVERSAL_CLAIM_RE = re.compile(r"\b(all|always|any|every|universally)\b", re.IGNORECASE)
 SCOPED_EVIDENCE_RE = re.compile(
     r"\b(five|some|subset|simulated|sparse-reward|weaker|limited|only|strongest)\b",
@@ -39,7 +44,7 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
     if overlap < 0.18:
         return EvidenceJudgment(Label.UNSUPPORTED, 0.25, "Evidence has too little claim overlap.")
 
-    if _has_numeric_conflict(claim, evidence):
+    if overlap >= 0.45 and _has_numeric_conflict(claim, evidence):
         return EvidenceJudgment(
             Label.CONTRADICTED,
             0.82,
@@ -82,10 +87,22 @@ def _has_polarity_conflict(claim: str, evidence: str) -> bool:
 
 
 def _has_numeric_conflict(claim: str, evidence: str) -> bool:
-    claim_numbers = set(NUMBER_RE.findall(claim))
-    evidence_numbers = set(NUMBER_RE.findall(evidence))
-    return bool(claim_numbers and evidence_numbers and claim_numbers.isdisjoint(evidence_numbers))
+    claim_mentions = _number_mentions(claim)
+    evidence_mentions = _number_mentions(evidence)
+    if len(claim_mentions) != 1 or len(evidence_mentions) != 1:
+        return False
+    claim_number, claim_unit = claim_mentions[0]
+    evidence_number, evidence_unit = evidence_mentions[0]
+    return bool(claim_unit and claim_unit == evidence_unit and claim_number != evidence_number)
 
 
 def _has_scope_gap(claim: str, evidence: str) -> bool:
     return bool(UNIVERSAL_CLAIM_RE.search(claim) and SCOPED_EVIDENCE_RE.search(evidence))
+
+
+def _number_mentions(text: str) -> list[tuple[str, str]]:
+    mentions = []
+    for match in NUMBER_WITH_UNIT_RE.finditer(text):
+        unit = match.group("percent") or match.group("unit") or ""
+        mentions.append((match.group("number").replace(",", ""), unit.lower()))
+    return mentions

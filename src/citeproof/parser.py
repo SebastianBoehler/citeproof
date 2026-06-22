@@ -10,13 +10,24 @@ from citeproof.text import split_sentences
 CITE_COMMAND_RE = re.compile(r"\\cite[a-zA-Z*]*\{([^}]+)\}")
 BRACKET_CITE_RE = re.compile(r"\[([^\]]*@[\w:.-]+[^\]]*)\]")
 AT_CITE_RE = re.compile(r"@([\w:.-]+)")
+LATEX_ENVIRONMENTS_TO_DROP = (
+    "comment",
+    "equation",
+    "figure",
+    "figure*",
+    "IEEEkeywords",
+    "table",
+    "table*",
+    "tabular",
+    "tikzpicture",
+)
 
 
 def parse_claims(text: str, require_citation: bool = True) -> list[Claim]:
     """Parse citation-bearing claims from a draft."""
 
     claims: list[Claim] = []
-    for sentence in split_sentences(_strip_markdown_noise(text)):
+    for sentence in split_sentences(_prepare_draft_text(text)):
         citation_keys = extract_citation_keys(sentence)
         if require_citation and not citation_keys:
             continue
@@ -42,6 +53,7 @@ def clean_claim_text(text: str) -> str:
 
     cleaned = CITE_COMMAND_RE.sub("", text)
     cleaned = BRACKET_CITE_RE.sub("", cleaned)
+    cleaned = re.sub(r"[{}]", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     cleaned = re.sub(r"\s+([.!?,;:])", r"\1", cleaned)
     return cleaned
@@ -59,3 +71,45 @@ def _strip_markdown_noise(text: str) -> str:
             continue
         lines.append(line)
     return "\n".join(lines)
+
+
+def _prepare_draft_text(text: str) -> str:
+    text = _strip_markdown_noise(text)
+    text = _strip_latex_comments(text)
+    for environment in LATEX_ENVIRONMENTS_TO_DROP:
+        text = _drop_latex_environment(text, environment)
+    text = _unwrap_latex_text_commands(text)
+    text = re.sub(r"\\(?:section|subsection|subsubsection|caption|label|ref)\*?\{[^}]*\}", " ", text)
+    text = re.sub(r"\\(?!cite)[A-Za-z]+\*?(?:\[[^\]]*\])?", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+def _strip_latex_comments(text: str) -> str:
+    lines = []
+    for line in text.splitlines():
+        escaped = False
+        kept = []
+        for char in line:
+            if char == "%" and not escaped:
+                break
+            kept.append(char)
+            escaped = char == "\\" and not escaped
+        lines.append("".join(kept))
+    return "\n".join(lines)
+
+
+def _drop_latex_environment(text: str, environment: str) -> str:
+    pattern = re.compile(
+        rf"\\begin\{{{re.escape(environment)}\}}.*?\\end\{{{re.escape(environment)}\}}",
+        re.DOTALL,
+    )
+    return pattern.sub(" ", text)
+
+
+def _unwrap_latex_text_commands(text: str) -> str:
+    previous = None
+    while previous != text:
+        previous = text
+        text = re.sub(r"\\(?:emph|textbf|textit|texttt|underline)\{([^{}]*)\}", r"\1", text)
+    return text

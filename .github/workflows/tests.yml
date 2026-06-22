@@ -1,0 +1,31 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run tests
+        run: uv run --extra dev pytest
+      - name: Run sample eval
+        run: uv run citeproof eval examples/claim_support.jsonl
+      - name: Run sample draft verification
+        run: |
+          set +e
+          uv run citeproof verify examples/draft.md --sources examples/sources
+          code=$?
+          test "$code" -eq 2

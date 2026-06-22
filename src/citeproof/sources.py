@@ -9,6 +9,7 @@ from citeproof.models import Source, SourceChunk
 from citeproof.text import chunk_text
 
 TEXT_SUFFIXES = {".txt", ".md"}
+PDF_SUFFIX = ".pdf"
 
 
 def load_sources(source_dir: str | Path) -> list[Source]:
@@ -36,12 +37,47 @@ def load_sources(source_dir: str | Path) -> list[Source]:
                         path=str(path),
                     )
                 )
+        elif path.suffix.lower() == PDF_SUFFIX:
+            text = _extract_pdf_text(path).strip()
+            if text:
+                sources.append(
+                    Source(
+                        source_id=path.stem,
+                        citation_key=path.stem,
+                        title=path.stem,
+                        text=text,
+                        path=str(path),
+                    )
+                )
         elif path.suffix.lower() == ".jsonl":
             sources.extend(_load_jsonl_sources(path))
 
     if not sources:
         raise ValueError(f"No text or JSONL sources found in {root}")
     return sources
+
+
+def align_sources_to_bibtex(sources: list[Source], title_by_key: dict[str, str]) -> list[Source]:
+    """Assign citation keys to source files by fuzzy title overlap."""
+
+    aligned: list[Source] = []
+    used_keys: set[str] = set()
+    for source in sources:
+        key = _best_title_key(source.title or source.source_id, title_by_key, used_keys)
+        if key is None:
+            aligned.append(source)
+            continue
+        used_keys.add(key)
+        aligned.append(
+            Source(
+                source_id=source.source_id,
+                citation_key=key,
+                title=title_by_key[key],
+                text=source.text,
+                path=source.path,
+            )
+        )
+    return aligned
 
 
 def build_chunks(sources: list[Source]) -> list[SourceChunk]:
@@ -83,3 +119,41 @@ def _load_jsonl_sources(path: Path) -> list[Source]:
             )
         )
     return sources
+
+
+def _extract_pdf_text(path: Path) -> str:
+    try:
+        from pypdf import PdfReader
+    except ImportError as exc:
+        raise RuntimeError("PDF support requires pypdf. Install with: uv sync") from exc
+
+    reader = PdfReader(str(path))
+    pages = []
+    for index, page in enumerate(reader.pages, start=1):
+        text = page.extract_text() or ""
+        if text.strip():
+            pages.append(f"Page {index}\n{text}")
+    return "\n\n".join(pages)
+
+
+def _best_title_key(
+    source_title: str,
+    title_by_key: dict[str, str],
+    used_keys: set[str],
+) -> str | None:
+    from citeproof.text import tokenize
+
+    source_tokens = set(tokenize(source_title))
+    best_key = None
+    best_score = 0.0
+    for key, title in title_by_key.items():
+        if key in used_keys:
+            continue
+        title_tokens = set(tokenize(title))
+        if not title_tokens:
+            continue
+        score = len(source_tokens & title_tokens) / len(title_tokens)
+        if score > best_score:
+            best_key = key
+            best_score = score
+    return best_key if best_score >= 0.55 else None

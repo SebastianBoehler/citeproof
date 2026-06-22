@@ -22,11 +22,20 @@ def test_detects_supported_claim() -> None:
 
 def test_detects_numeric_contradiction() -> None:
     judgment = judge_evidence(
-        "The method improves success by 42%.",
-        "The method improves success by 12%.",
+        "The method improves success by 42 percent.",
+        "The method improves success by 12 percent.",
     )
 
     assert judgment.label == Label.CONTRADICTED
+
+
+def test_avoids_unrelated_numeric_contradiction() -> None:
+    judgment = judge_evidence(
+        "We train on 6000 samples from WildChat.",
+        "WildChat contains 1M ChatGPT interaction logs in the wild.",
+    )
+
+    assert judgment.label != Label.CONTRADICTED
 
 
 def test_detects_scope_overstatement_as_partial() -> None:

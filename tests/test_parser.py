@@ -19,3 +19,15 @@ def test_parse_claims_keeps_only_cited_sentences() -> None:
     assert len(claims) == 1
     assert claims[0].text == "Cited sentence."
     assert claims[0].citation_keys == ("smith2024",)
+
+
+def test_parse_claims_drops_latex_tables_and_comments() -> None:
+    draft = (
+        "\\begin{comment} Hidden claim \\cite{hidden2024}. \\end{comment}\n"
+        "\\begin{table} Table claim \\cite{table2024}. \\end{table}\n"
+        "\\section{Intro} Real claim \\cite{real2024}."
+    )
+
+    claims = parse_claims(draft)
+
+    assert [claim.citation_keys for claim in claims] == [("real2024",)]

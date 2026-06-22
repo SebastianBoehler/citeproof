@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from citeproof.report import results_to_markdown
 from citeproof.verifier import verify_claim_text, verify_draft
 
@@ -40,6 +42,14 @@ def create_server():
         """Render a Markdown evidence report for a local draft file."""
 
         return results_to_markdown(verify_draft(draft_path, sources_dir))
+
+    @mcp.tool()
+    def verify_paper_file(tex_path: str, bib_path: str, sources_dir: str) -> dict:
+        """Verify a LaTeX paper against BibTeX metadata and local source files."""
+
+        from citeproof.paper import verify_paper
+
+        return json.loads(verify_paper(tex_path, bib_path, sources_dir).to_json())
 
     return mcp
 

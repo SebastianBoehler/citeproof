@@ -6,6 +6,7 @@ import argparse
 import sys
 
 from citeproof.evals.runner import run_eval_file
+from citeproof.paper import render_paper_report, verify_paper
 from citeproof.report import results_to_json, results_to_markdown, write_reports
 from citeproof.verifier import verify_claim_text, verify_draft
 
@@ -42,6 +43,28 @@ def _run_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_verify_bib(args: argparse.Namespace) -> int:
+    from citeproof.bibliography import render_bibliography_report, verify_bibliography
+
+    report = verify_bibliography(args.tex, args.bib)
+    if args.json_output:
+        _write_text(args.json_output, report.to_json())
+    if args.markdown_output:
+        _write_text(args.markdown_output, render_bibliography_report(report))
+    print(report.to_json() if args.format == "json" else render_bibliography_report(report))
+    return 2 if report.error_count else 0
+
+
+def _run_verify_paper(args: argparse.Namespace) -> int:
+    report = verify_paper(args.tex, args.bib, args.sources)
+    if args.json_output:
+        _write_text(args.json_output, report.to_json())
+    if args.markdown_output:
+        _write_text(args.markdown_output, render_paper_report(report))
+    print(report.to_json() if args.format == "json" else render_paper_report(report))
+    return _paper_exit_code(report)
+
+
 def _run_mcp(_args: argparse.Namespace) -> int:
     from citeproof.mcp_server import run
 
@@ -51,6 +74,21 @@ def _run_mcp(_args: argparse.Namespace) -> int:
 
 def _exit_code(results: list[object]) -> int:
     return 2 if any(result.label.value in {"contradicted", "unsupported"} for result in results) else 0
+
+
+def _paper_exit_code(report: object) -> int:
+    if report.bibliography["error_count"]:
+        return 2
+    labels = {result["label"] for result in report.claim_results}
+    return 2 if labels & {"contradicted", "unsupported"} else 0
+
+
+def _write_text(path: str, text: str) -> None:
+    from pathlib import Path
+
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(text, encoding="utf-8")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -74,6 +112,23 @@ def _build_parser() -> argparse.ArgumentParser:
     eval_parser = subparsers.add_parser("eval", help="Run a claim-support eval JSONL file.")
     eval_parser.add_argument("dataset")
     eval_parser.set_defaults(func=_run_eval)
+
+    bib = subparsers.add_parser("verify-bib", help="Verify LaTeX citation keys against BibTeX.")
+    bib.add_argument("tex")
+    bib.add_argument("--bib", required=True)
+    bib.add_argument("--format", choices=["json", "markdown"], default="json")
+    bib.add_argument("--json-output")
+    bib.add_argument("--markdown-output")
+    bib.set_defaults(func=_run_verify_bib)
+
+    paper = subparsers.add_parser("verify-paper", help="Verify a LaTeX paper with BibTeX and sources.")
+    paper.add_argument("tex")
+    paper.add_argument("--bib", required=True)
+    paper.add_argument("--sources", required=True)
+    paper.add_argument("--format", choices=["json", "markdown"], default="json")
+    paper.add_argument("--json-output")
+    paper.add_argument("--markdown-output")
+    paper.set_defaults(func=_run_verify_paper)
 
     mcp = subparsers.add_parser("mcp", help="Run the CiteProof MCP server.")
     mcp.set_defaults(func=_run_mcp)
