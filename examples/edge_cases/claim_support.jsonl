@@ -114,3 +114,5 @@
 {"id":"randomized-intervention-causal-support","claim":"The intervention caused test scores to improve.","evidence":"The randomized intervention improved test scores relative to control.","expected_label":"supported"}
 {"id":"p-value-threshold-conflict","claim":"The model improvement has p < 0.05.","evidence":"The model improvement has p = 0.08.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
 {"id":"significance-p-value-conflict","claim":"The model improvement is statistically significant.","evidence":"The model improvement has p = 0.08.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"numeric-ci-includes-zero-conflict","claim":"The treatment effect confidence interval excludes zero.","evidence":"The treatment effect 95% confidence interval was [-0.10, 0.30].","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"significance-numeric-ci-conflict","claim":"The treatment effect is statistically significant.","evidence":"The treatment effect 95% confidence interval was [-0.10, 0.30].","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}

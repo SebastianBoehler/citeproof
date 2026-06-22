@@ -127,6 +127,51 @@ def test_ignores_matching_explicit_p_value_relation() -> None:
     assert not any("P-value conflict" in finding for finding in findings)
 
 
+def test_detects_numeric_ci_includes_zero_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment effect confidence interval excludes zero.",
+        "The treatment effect 95% confidence interval was [-0.10, 0.30].",
+    )
+
+    assert any("Confidence interval conflict" in finding for finding in findings)
+
+
+def test_detects_numeric_ci_excludes_zero_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment effect confidence interval includes zero.",
+        "The treatment effect 95% confidence interval was [0.10, 0.30].",
+    )
+
+    assert any("Confidence interval conflict" in finding for finding in findings)
+
+
+def test_significance_conflicts_with_ci_including_zero() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment effect is statistically significant.",
+        "The treatment effect 95% confidence interval was [-0.10, 0.30].",
+    )
+
+    assert any("Confidence interval conflict" in finding for finding in findings)
+
+
+def test_not_significant_conflicts_with_ci_excluding_zero() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment effect is not statistically significant.",
+        "The treatment effect 95% confidence interval was [0.10, 0.30].",
+    )
+
+    assert any("Confidence interval conflict" in finding for finding in findings)
+
+
+def test_ignores_matching_numeric_ci_relation() -> None:
+    findings = inspect_statistical_conflicts(
+        "The treatment effect confidence interval excludes zero.",
+        "The treatment effect 95% confidence interval was [0.10, 0.30].",
+    )
+
+    assert not any("Confidence interval conflict" in finding for finding in findings)
+
+
 def test_ignores_evidence_with_claim_value_plus_extra_value() -> None:
     findings = inspect_statistical_conflicts(
         "The paper reports median latency.",

@@ -40,3 +40,13 @@ def test_p_value_conflict_maps_to_numeric_failure() -> None:
 
     assert judgment.label == Label.CONTRADICTED
     assert judgment.failure_mode == FailureMode.NUMERIC_CONFLICT
+
+
+def test_numeric_confidence_interval_conflict_is_not_supported() -> None:
+    judgment = adjudicate_evidence(
+        "The treatment effect confidence interval excludes zero.",
+        "The treatment effect 95% confidence interval was [-0.10, 0.30].",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+    assert judgment.failure_mode == FailureMode.ENTITY_CONFLICT
