@@ -74,6 +74,11 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
             "Evidence uses an incompatible polarity for the claimed result.",
         )
 
+    if fact_inspection.label == Label.PARTIALLY_SUPPORTED:
+        return EvidenceJudgment(
+            Label.PARTIALLY_SUPPORTED, 0.68, "; ".join(fact_inspection.findings)
+        )
+
     if overlap >= 0.38 and _has_scope_gap(claim, evidence):
         return EvidenceJudgment(
             Label.PARTIALLY_SUPPORTED,

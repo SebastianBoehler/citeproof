@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from citeproof.comparison_lens import inspect_comparison_direction
 from citeproof.models import FactInspection, Label
 from citeproof.text import token_overlap_ratio
 
@@ -55,14 +56,26 @@ class _NumberMention:
 def inspect_facts(claim: str, evidence: str) -> FactInspection:
     """Return deterministic conflicts or partial-support signals."""
 
-    findings = (
+    comparison_inspection = inspect_comparison_direction(
+        claim, evidence, _material_anchors, _normalize_anchor
+    )
+    hard_findings = (
         _number_conflicts(claim, evidence)
         + _unit_conflicts(claim, evidence)
         + _year_conflicts(claim, evidence)
-        + _entity_conflicts(claim, evidence)
     )
-    if findings:
-        return FactInspection(Label.CONTRADICTED, tuple(findings))
+    hard_findings += (
+        list(comparison_inspection.findings)
+        if comparison_inspection.label == Label.CONTRADICTED
+        else []
+    )
+    if hard_findings:
+        return FactInspection(Label.CONTRADICTED, tuple(hard_findings))
+    if comparison_inspection.label == Label.PARTIALLY_SUPPORTED:
+        return FactInspection(Label.PARTIALLY_SUPPORTED, comparison_inspection.findings)
+    entity_findings = _entity_conflicts(claim, evidence)
+    if entity_findings:
+        return FactInspection(Label.CONTRADICTED, tuple(entity_findings))
     if HEDGE_RE.search(evidence) and not HEDGE_RE.search(claim):
         return FactInspection(Label.PARTIALLY_SUPPORTED, ("Evidence is hedged or inconclusive.",))
     if UNIVERSAL_RE.search(claim) and NARROW_RE.search(evidence):

@@ -92,8 +92,11 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
     cases = run_eval_cases(REPO_ROOT / "examples/edge_cases/claim_support.jsonl")
     mode_cases = [case for case in cases if "expected_failure_mode" in case]
 
-    assert {"source-silence-related", "metric-cross-contradiction", "material-anchor-swap"} <= {
-        case["id"] for case in mode_cases
-    }
+    assert {
+        "source-silence-related",
+        "metric-cross-contradiction",
+        "material-anchor-swap",
+        "comparison-direction-swap",
+    } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)
