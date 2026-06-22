@@ -16,8 +16,20 @@ NEGATING_EVIDENCE_RE = re.compile(
     r"\b(no statistically significant|not significant|does not improve|did not improve|"
     r"failed to improve|does not reduce|did not reduce|failed to reduce|no reduction|"
     r"does not cover|did not cover|does not span|did not span|does not improve f1 score|"
-    r"did not improve f1 score|failed to improve f1 score|no f1 score improvement|"
+    r"did not improve f1 score|failed to improve f1 score|no f1 score improvement|no f1 improvement|"
     r"comparable to|similar to|no improvement|worse than|lower than)\b",
+    re.IGNORECASE,
+)
+GENERIC_NEGATING_EVIDENCE_RE = re.compile(
+    r"\b(no statistically significant|not significant|does not improve(?!\s+f1 score)|"
+    r"did not improve(?!\s+f1 score)|failed to improve(?!\s+f1 score)|"
+    r"does not reduce|did not reduce|failed to reduce|no reduction|does not cover|did not cover|"
+    r"does not span|did not span|comparable to|similar to|no improvement|worse than|lower than)\b",
+    re.IGNORECASE,
+)
+METRIC_NEGATING_EVIDENCE_RE = re.compile(
+    r"\b(?:does not improve|did not improve|failed to improve)\s+(?P<metric>f1(?:\s+score)?)\b|"
+    r"\bno\s+(?P<no_metric>f1(?:\s+score)?)\s+improvement\b",
     re.IGNORECASE,
 )
 NEGATIVE_CLAIM_RE = re.compile(
@@ -39,6 +51,7 @@ SCOPED_EVIDENCE_RE = re.compile(
     r"\b(five|some|subset|simulated|sparse-reward|weaker|limited|only|strongest)\b",
     re.IGNORECASE,
 )
+METRIC_RE = re.compile(r"\b(f1(?:\s+score)?|accuracy)\b", re.IGNORECASE)
 
 
 def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
@@ -88,9 +101,34 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
 def _has_polarity_conflict(claim: str, evidence: str) -> bool:
     claim_positive = bool(POSITIVE_CLAIM_RE.search(claim))
     claim_negative = bool(NEGATIVE_CLAIM_RE.search(claim))
+    generic_evidence_negative = bool(GENERIC_NEGATING_EVIDENCE_RE.search(evidence))
+    negated_metrics = _negated_metrics(evidence)
     evidence_negative = bool(NEGATING_EVIDENCE_RE.search(evidence))
     evidence_positive = bool(POSITIVE_EVIDENCE_RE.search(evidence))
-    return (claim_positive and evidence_negative) or (claim_negative and evidence_positive)
+    if claim_positive and evidence_negative:
+        if generic_evidence_negative:
+            return True
+        claim_metrics = _metrics(claim)
+        return not claim_metrics or bool(claim_metrics & negated_metrics)
+    return claim_negative and evidence_positive
+
+
+def _metrics(text: str) -> set[str]:
+    return {_normalize_metric(match.group(0)) for match in METRIC_RE.finditer(text)}
+
+
+def _negated_metrics(text: str) -> set[str]:
+    metrics: set[str] = set()
+    for match in METRIC_NEGATING_EVIDENCE_RE.finditer(text):
+        metric = match.group("metric") or match.group("no_metric")
+        metrics.add(_normalize_metric(metric))
+    return metrics
+
+
+def _normalize_metric(metric: str) -> str:
+    if metric.lower().startswith("f1"):
+        return "f1"
+    return metric.lower()
 
 
 def _has_numeric_conflict(claim: str, evidence: str) -> bool:
