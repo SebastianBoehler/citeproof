@@ -13,7 +13,8 @@ AnchorNormalizer = Callable[[str], str]
 
 COMPARISON_RE = re.compile(
     r"(?P<left>.+?)\s+"
-    r"(?P<relation>outperforms|is better than|has higher accuracy than|is superior to)\s+"
+    r"(?P<relation>beats|outperforms|outperformed|exceeds|is better than|is superior to|"
+    r"has higher accuracy than|achieves higher accuracy than|has lower error than)\s+"
     r"(?P<right>.+?)(?:\.|$)",
     re.IGNORECASE,
 )
@@ -27,13 +28,6 @@ COMPARISON_BENCHMARK_PREFIX_RE = re.compile(
 COMPARISON_CONTEXT_SUFFIX_RE = re.compile(
     r"(?P<right>.+?)\s+(?:on|in|for)\s+(?P<context>.+)$", re.IGNORECASE
 )
-COMPARISON_RELATIONS = {
-    "outperforms": "generic",
-    "is better than": "generic",
-    "has higher accuracy than": "higher_accuracy",
-    "is superior to": "generic",
-}
-
 
 @dataclass(frozen=True)
 class ComparisonInspection:
@@ -42,11 +36,30 @@ class ComparisonInspection:
 
 
 @dataclass(frozen=True)
+class _RelationSpec:
+    family: str
+    dimension: str
+
+
+@dataclass(frozen=True)
 class _Comparison:
     left: str
     right: str
-    relation: str
+    relation: _RelationSpec
     context: tuple[str, ...] = ()
+
+
+COMPARISON_RELATIONS = {
+    "beats": _RelationSpec("higher_is_better", "generic"),
+    "outperforms": _RelationSpec("higher_is_better", "generic"),
+    "outperformed": _RelationSpec("higher_is_better", "generic"),
+    "exceeds": _RelationSpec("higher_is_better", "generic"),
+    "is better than": _RelationSpec("higher_is_better", "generic"),
+    "is superior to": _RelationSpec("higher_is_better", "generic"),
+    "has higher accuracy than": _RelationSpec("higher_is_better", "accuracy"),
+    "achieves higher accuracy than": _RelationSpec("higher_is_better", "accuracy"),
+    "has lower error than": _RelationSpec("lower_is_better", "error"),
+}
 
 
 def inspect_comparison_direction(
@@ -66,7 +79,8 @@ def inspect_comparison_direction(
             Label.PARTIALLY_SUPPORTED,
             (
                 "Comparison dimension mismatch: claim "
-                f"{claim_comparison.relation} vs evidence {evidence_comparison.relation}",
+                f"{_relation_label(claim_comparison.relation)} vs evidence "
+                f"{_relation_label(evidence_comparison.relation)}",
             ),
         )
     if not _comparison_contexts_compatible(claim_comparison, evidence_comparison, normalize_anchor):
@@ -121,6 +135,10 @@ def _comparison_direction_reversed(
         normalize_anchor(claim.left) == normalize_anchor(evidence.right)
         and normalize_anchor(claim.right) == normalize_anchor(evidence.left)
     )
+
+
+def _relation_label(relation: _RelationSpec) -> str:
+    return f"{relation.family}/{relation.dimension}"
 
 
 def _same_comparison_pair(
