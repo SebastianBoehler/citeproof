@@ -29,6 +29,7 @@ TECHNICAL_PROPERTY_CONFLICTS = (
     "reward density conflict",
     "evaluation domain conflict",
     "data sensitivity conflict",
+    "trainable scope conflict",
 )
 STATISTICAL_CONFLICTS = (
     "auroc averaging conflict",
@@ -115,6 +116,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         or "numeric bound conflict" in text
         or "p-value conflict" in text
         or "ratio effect conflict" in text
+        or "exact effect value conflict" in text
+        or "endpoint window conflict" in text
     ):
         return FailureMode.NUMERIC_CONFLICT
     if "unit conflict" in text:
@@ -157,6 +160,12 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
     if any(conflict in text for conflict in TECHNICAL_PROPERTY_CONFLICTS):
         return FailureMode.ENTITY_CONFLICT
     if any(conflict in text for conflict in STATISTICAL_CONFLICTS):
+        return FailureMode.ENTITY_CONFLICT
+    if (
+        "adjustment status conflict" in text
+        or "population group conflict" in text
+        or "trial design conflict" in text
+    ):
         return FailureMode.ENTITY_CONFLICT
     return FailureMode.CONFLICTING_SOURCES
 

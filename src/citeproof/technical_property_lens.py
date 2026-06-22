@@ -67,13 +67,28 @@ GROUPS = (
             ("public", (r"\bpublic\s+(?:medical\s+)?records?\b", r"\bpublic\s+data\b")),
         ),
     ),
+    TechnicalPropertyGroup(
+        "Trainable scope",
+        (
+            ("all model weights", (r"\ball\s+(?:model\s+)?weights\b", r"\ball\s+parameters\b")),
+            ("adapter weights", (r"\badapter\s+weights\b", r"\blow[- ]rank\s+adapter\s+weights\b")),
+            (
+                "frozen base weights",
+                (
+                    r"\b(?:base|model|pretrained)\s+weights\s+(?:are\s+)?frozen\b",
+                    r"\bkeeps?\s+(?:base|model|pretrained)\s+weights\s+frozen\b",
+                ),
+            ),
+        ),
+    ),
 )
 
 TRIGGER_WORDS_RE = re.compile(
     r"\b("
-    r"approximate|approximation|constant|cubic|data|dense|domain|exact|exponential|"
-    r"fine|fixed|frozen|inference|kept|linear|logarithmic|medical|out|private|"
-    r"public|quadratic|records?|rewards?|sparse|time|tuned|tuning"
+    r"adapter|all|approximate|approximation|base|constant|cubic|data|dense|domain|exact|"
+    r"exponential|fine|fixed|frozen|inference|keeps?|kept|linear|logarithmic|"
+    r"low|medical|model|out|parameters|pretrained|private|public|quadratic|rank|"
+    r"records?|rewards?|sparse|time|tuned|tuning|weights?"
     r")\b",
     re.IGNORECASE,
 )

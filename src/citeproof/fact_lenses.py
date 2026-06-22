@@ -6,6 +6,7 @@ import re
 
 from citeproof.assertion_lens import inspect_assertion_status_tensions
 from citeproof.attribute_lens import inspect_attribute_conflicts
+from citeproof.clinical_lens import inspect_clinical_conflicts
 from citeproof.comparison_lens import inspect_comparison_direction
 from citeproof.context_lens import (
     inspect_component_exclusion_conflicts,
@@ -96,6 +97,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + list(inspect_role_conflicts(claim, evidence))
         + list(inspect_component_exclusion_conflicts(claim, evidence))
         + list(inspect_contrast_exclusion_conflicts(claim, evidence))
+        + list(inspect_clinical_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)
