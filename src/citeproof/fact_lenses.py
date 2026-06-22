@@ -3,17 +3,12 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 
 from citeproof.comparison_lens import inspect_comparison_direction
 from citeproof.models import FactInspection, Label
+from citeproof.quantities import QuantityMention, numbers_to_units, quantity_mentions
 from citeproof.text import token_overlap_ratio
 
-NUMBER_UNIT_RE = re.compile(
-    r"(?P<number>\d+(?:,\d{3})*(?:\.\d+)?)\s*"
-    r"(?P<unit>%|percent|examples?|samples?|gpus?|turns?|conversations?|dialogues?|domains?|languages?)",
-    re.IGNORECASE,
-)
 MATERIAL_ANCHOR_RE = re.compile(
     r"\b(?:[A-Z]+[A-Za-z0-9.-]*\d+[A-Za-z0-9.-]*|[A-Z][A-Za-z]*[A-Z][A-Za-z0-9.]*|"
     r"[A-Z][a-z]+[A-Z][A-Za-z0-9.]*|[A-Z]{2,}[A-Za-z0-9.-]*)\b"
@@ -44,13 +39,6 @@ GENERIC_ANCHORS = {
     "The",
 }
 ENTITY_CONFLICT_MIN_OVERLAP = 0.45
-
-
-@dataclass(frozen=True)
-class _NumberMention:
-    number: str
-    unit: str
-    text: str
 
 
 def inspect_facts(claim: str, evidence: str) -> FactInspection:
@@ -84,8 +72,8 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
 
 
 def _number_conflicts(claim: str, evidence: str) -> list[str]:
-    claim_mentions = _number_units(claim)
-    evidence_mentions = _number_units(evidence)
+    claim_mentions = _quantity_mentions_by_unit(claim)
+    evidence_mentions = _quantity_mentions_by_unit(evidence)
     findings: list[str] = []
     for unit, claim_items in claim_mentions.items():
         evidence_items = evidence_mentions.get(unit, ())
@@ -101,8 +89,8 @@ def _number_conflicts(claim: str, evidence: str) -> list[str]:
 
 
 def _unit_conflicts(claim: str, evidence: str) -> list[str]:
-    claim_numbers = _numbers_to_units(claim)
-    evidence_numbers = _numbers_to_units(evidence)
+    claim_numbers = numbers_to_units(claim)
+    evidence_numbers = numbers_to_units(evidence)
     findings: list[str] = []
     for number, claim_units in claim_numbers.items():
         evidence_units = evidence_numbers.get(number, set())
@@ -184,29 +172,8 @@ def _starts_inside_capitalized_phrase(text: str, start: int) -> bool:
     return bool(previous and previous.group(1)[0].isupper())
 
 
-def _numbers_to_units(text: str) -> dict[str, set[str]]:
-    numbers: dict[str, set[str]] = {}
-    for unit, mentions in _number_units(text).items():
-        for mention in mentions:
-            numbers.setdefault(mention.number, set()).add(unit)
-    return numbers
-
-
-def _number_units(text: str) -> dict[str, tuple[_NumberMention, ...]]:
-    mentions: dict[str, list[_NumberMention]] = {}
-    for match in NUMBER_UNIT_RE.finditer(text):
-        unit = _normalize_unit(match.group("unit"))
-        mention = _NumberMention(_normalize_number(match.group("number")), unit, match.group(0))
-        mentions.setdefault(unit, []).append(mention)
+def _quantity_mentions_by_unit(text: str) -> dict[str, tuple[QuantityMention, ...]]:
+    mentions: dict[str, list[QuantityMention]] = {}
+    for mention in quantity_mentions(text):
+        mentions.setdefault(mention.unit, []).append(mention)
     return {unit: tuple(items) for unit, items in mentions.items()}
-
-
-def _normalize_unit(unit: str) -> str:
-    normalized = unit.lower()
-    if normalized == "percent":
-        return "%"
-    return normalized.rstrip("s")
-
-
-def _normalize_number(number: str) -> str:
-    return number.replace(",", "")

@@ -22,3 +22,4 @@
 {"id":"comparison-beats-swap","claim":"LoRA beats Prefix Tuning on GLUE.","evidence":"Prefix Tuning beats LoRA on GLUE.","expected_label":"contradicted","expected_failure_mode":"comparison_direction_conflict"}
 {"id":"training-time-fewer-hours-support","claim":"Method X reduces training time.","evidence":"Method X required fewer training hours than the baseline.","expected_label":"supported"}
 {"id":"sample-efficiency-fewer-interactions-support","claim":"Method X improves sample efficiency.","evidence":"Method X reaches the target success rate with fewer environment interactions.","expected_label":"supported"}
+{"id":"compact-number-conflict","claim":"Schema-Guided Dialogue contains over 16k task-oriented dialogues.","evidence":"Schema-Guided Dialogue contains 15,000 task-oriented dialogues.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}

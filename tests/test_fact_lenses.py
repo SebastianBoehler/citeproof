@@ -2,6 +2,54 @@ from citeproof.fact_lenses import inspect_facts
 from citeproof.models import Label
 
 
+def test_detects_compact_quantity_conflict() -> None:
+    result = inspect_facts(
+        "Schema-Guided Dialogue contains over 16k task-oriented dialogues.",
+        "Schema-Guided Dialogue contains 15,000 task-oriented dialogues.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Numeric conflict" in finding for finding in result.findings)
+
+
+def test_does_not_contradict_matching_compact_and_scale_word_quantities() -> None:
+    result = inspect_facts(
+        "WildChat contains 1M conversations.",
+        "WildChat contains 1 million conversations.",
+    )
+
+    assert result.label != Label.CONTRADICTED
+
+
+def test_does_not_contradict_matching_spelled_and_digit_quantities() -> None:
+    result = inspect_facts(
+        "The model was trained on four GPUs.",
+        "The model was trained on 4 GPUs.",
+    )
+
+    assert result.label != Label.CONTRADICTED
+
+
+def test_detects_spelled_quantity_conflict() -> None:
+    result = inspect_facts(
+        "The model was trained on four GPUs.",
+        "The model was trained on three GPUs.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Numeric conflict" in finding for finding in result.findings)
+
+
+def test_does_not_flag_extra_same_number_unit_as_conflict() -> None:
+    result = inspect_facts(
+        "The model was trained on four GPUs.",
+        "The model was trained on four GPUs and four samples.",
+    )
+
+    assert result.label != Label.CONTRADICTED
+    assert not any("Unit conflict" in finding for finding in result.findings)
+
+
 def test_detects_multi_number_conflict_with_units() -> None:
     result = inspect_facts(
         "The model was trained on 6000 examples with 4 GPUs.",
