@@ -99,6 +99,11 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
         "comparison-direction-swap",
         "comparison-beats-swap",
         "compact-number-conflict",
+        "use-negation-conflict",
+        "training-negation-conflict",
+        "without-pretraining-conflict",
+        "direction-swap-conflict",
+        "quantity-bound-conflict",
     } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)
