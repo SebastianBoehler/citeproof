@@ -84,13 +84,22 @@ def test_metric_negation_does_not_contradict_different_supported_metric() -> Non
     assert judgment.label == Label.SUPPORTED
 
 
-def test_metric_negation_in_form_does_not_contradict_different_supported_metric() -> None:
+def test_metric_cross_support_with_no_improvement_in_f1() -> None:
     judgment = judge_evidence(
         "Method X improves accuracy over the baseline.",
         "Method X improves accuracy over the baseline, with no improvement in F1.",
     )
 
     assert judgment.label == Label.SUPPORTED
+
+
+def test_metric_cross_contradicts_matching_metric() -> None:
+    judgment = judge_evidence(
+        "Method X improves F1 score over the baseline.",
+        "Method X improves accuracy over the baseline, with no improvement in F1.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
 
 
 def test_accuracy_negation_does_not_contradict_supported_f1_metric() -> None:

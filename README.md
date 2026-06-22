@@ -141,9 +141,12 @@ The conservative ordering is:
 5. Source silence -> `unsupported`
 
 Strict verification results include a trust trace when available. The trace
-records source-gate status, atom-level labels, selected rationale spans, stable
-failure modes, and a review action. This lets a writer or agent repair the
-specific unsupported atom instead of guessing why a claim failed.
+records source-gate status, atom-level labels, every judged rationale candidate,
+stable failure modes, and a review action. Contradiction candidates block a
+`supported` verdict even when a supporting span is ranked higher, so lower-ranked
+conflicts stay visible instead of being hidden by retrieval order. This lets a
+writer or agent repair the specific unsupported atom instead of guessing why a
+claim failed.
 
 The most important product metric is false-supported rate: cases where the
 system says `supported` while the expected label is anything else.

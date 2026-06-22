@@ -7,12 +7,12 @@ and macro-F1 matter, but a false `supported` result is the highest-risk error.
 
 ## Local Benchmarks
 
-Current local scores after the strict offline verifier updates:
+Current local scores after the strict verifier v2 high-recall evidence updates:
 
 | Benchmark | Total | Accuracy | Macro-F1 | False-Supported Rate |
 | --- | ---: | ---: | ---: | ---: |
 | `examples/claim_support.jsonl` | 4 | 1.0 | 0.8 | 0.0 |
-| `examples/edge_cases/claim_support.jsonl` | 15 | 1.0 | 0.8 | 0.0 |
+| `examples/edge_cases/claim_support.jsonl` | 19 | 1.0 | 0.8 | 0.0 |
 | `examples/hallucination` draft eval | 5 | 1.0 | 0.8 | 0.0 |
 
 These benchmarks are intentionally small and adversarial. They cover basic
@@ -32,6 +32,13 @@ failure-mode classification, and bibliography-gated hallucination checks.
 - `unsupported_recall`: share of unsupported expected cases correctly rejected.
 - `contradiction_recall`: share of contradicted expected cases caught as `contradicted`.
 - `manual_review_rate`: share of predictions returned as `partially_supported` or `uncertain`.
+- `candidate_count`: number of rationale candidates judged for an atom.
+- `support_candidate_count`: judged candidates labeled as support.
+- `contradiction_candidate_count`: judged candidates labeled as contradiction.
+- `best_support_rank`: retrieval rank of the best supporting rationale, when present.
+- `best_contradiction_rank`: retrieval rank of the best contradictory rationale, when present.
+- `failure_mode_pass`: direct eval check that the predicted failure mode matches
+  `expected_failure_mode` when a case declares one.
 - Direct `eval` per-case reports include `id`, `expected_label`, `predicted_label`,
   `confidence`, `false_supported`, `pass`, `reason`, and `failure_mode` when
   the verifier can assign a stable failure category.

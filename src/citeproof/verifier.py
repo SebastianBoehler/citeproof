@@ -27,6 +27,10 @@ from citeproof.sources import build_chunks, load_sources
 
 Judge = Callable[[str, str], EvidenceJudgment]
 
+CHUNK_CANDIDATE_LIMIT = 8
+RATIONALE_CANDIDATE_LIMIT = 5
+RATIONALE_MIN_SCORE = 0.08
+
 
 def verify_claim(
     claim: Claim,
@@ -58,7 +62,7 @@ def verify_claim(
             trace=trace,
         )
 
-    retrieved = retrieve_evidence(claim, chunks, limit=evidence_limit)
+    retrieved = retrieve_evidence(claim, chunks, limit=max(evidence_limit, CHUNK_CANDIDATE_LIMIT))
     if not retrieved:
         trace = ClaimVerificationTrace(
             claim=claim.text,
@@ -145,7 +149,12 @@ def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list
     group = atomize_claim(claim)
     for atom in group.atoms:
         atom_claim = Claim(atom.text, atom.citation_keys)
-        candidates = select_rationales(atom_claim, chunks, limit=3)
+        candidates = select_rationales(
+            atom_claim,
+            chunks,
+            limit=RATIONALE_CANDIDATE_LIMIT,
+            min_score=RATIONALE_MIN_SCORE,
+        )
         if not candidates:
             verifications.append(
                 AtomVerification(
@@ -172,8 +181,9 @@ def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list
                 page=candidate.page,
                 relation=_relation_for(candidate_judgment.label),
                 score=candidate.lexical_score,
+                rank=rank,
             )
-            for candidate, candidate_judgment in judged_candidates
+            for rank, (candidate, candidate_judgment) in enumerate(judged_candidates, start=1)
         )
         verifications.append(
             AtomVerification(
@@ -184,6 +194,11 @@ def _verify_atoms(claim: Claim, chunks: list[SourceChunk], judge: Judge) -> list
                 rationales=rationales,
                 failure_mode=judgment.failure_mode,
                 reason=judgment.reason,
+                candidate_count=len(judged_candidates),
+                support_candidate_count=_count_relation(judged_candidates, "support"),
+                contradiction_candidate_count=_count_relation(judged_candidates, "contradict"),
+                best_support_rank=_best_rank_for(judged_candidates, "support"),
+                best_contradiction_rank=_best_rank_for(judged_candidates, "contradict"),
             )
         )
     return verifications
@@ -200,6 +215,25 @@ def _choose_candidate_judgment(
         Label.UNSUPPORTED: 0,
     }
     return max(judgments, key=lambda item: (priority[item[1].label], item[1].confidence))
+
+
+def _count_relation(
+    candidates: tuple[tuple[EvidenceCandidate, EvidenceJudgment], ...],
+    relation: str,
+) -> int:
+    return sum(1 for _candidate, judgment in candidates if _relation_for(judgment.label) == relation)
+
+
+def _best_rank_for(
+    candidates: tuple[tuple[EvidenceCandidate, EvidenceJudgment], ...],
+    relation: str,
+) -> int | None:
+    ranks = (
+        candidate.rank
+        for candidate, judgment in candidates
+        if _relation_for(judgment.label) == relation
+    )
+    return min(ranks, default=None)
 
 
 def _relation_for(label: Label) -> str:
