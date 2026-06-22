@@ -183,6 +183,16 @@ def test_reversed_comparison_with_different_context_is_not_supported() -> None:
     assert judgment.label == Label.PARTIALLY_SUPPORTED
 
 
+def test_reversed_comparison_context_mismatch_outranks_entity_conflict() -> None:
+    judgment = judge_evidence(
+        "LoRA outperforms Prefix Tuning on GLUE.",
+        "Prefix Tuning outperforms LoRA on SQuAD.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+    assert "Comparison context mismatch" in judgment.reason
+
+
 def test_reversed_comparison_with_different_dimension_is_not_supported() -> None:
     judgment = judge_evidence(
         "AlphaModel is better than BetaModel in latency.",
@@ -190,6 +200,16 @@ def test_reversed_comparison_with_different_dimension_is_not_supported() -> None
     )
 
     assert judgment.label == Label.PARTIALLY_SUPPORTED
+
+
+def test_reversed_comparison_with_for_dimensions_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "AlphaModel is better than BetaModel for latency.",
+        "BetaModel is better than AlphaModel for accuracy.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+    assert "Comparison context mismatch" in judgment.reason
 
 
 def test_reversed_comparison_with_benchmark_framing_is_not_supported() -> None:

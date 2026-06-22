@@ -59,22 +59,23 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
     comparison_inspection = inspect_comparison_direction(
         claim, evidence, _material_anchors, _normalize_anchor
     )
-    comparison_findings = (
+    hard_findings = (
+        _number_conflicts(claim, evidence)
+        + _unit_conflicts(claim, evidence)
+        + _year_conflicts(claim, evidence)
+    )
+    hard_findings += (
         list(comparison_inspection.findings)
         if comparison_inspection.label == Label.CONTRADICTED
         else []
     )
-    findings = (
-        _number_conflicts(claim, evidence)
-        + _unit_conflicts(claim, evidence)
-        + _year_conflicts(claim, evidence)
-        + comparison_findings
-        + _entity_conflicts(claim, evidence)
-    )
-    if findings:
-        return FactInspection(Label.CONTRADICTED, tuple(findings))
+    if hard_findings:
+        return FactInspection(Label.CONTRADICTED, tuple(hard_findings))
     if comparison_inspection.label == Label.PARTIALLY_SUPPORTED:
         return FactInspection(Label.PARTIALLY_SUPPORTED, comparison_inspection.findings)
+    entity_findings = _entity_conflicts(claim, evidence)
+    if entity_findings:
+        return FactInspection(Label.CONTRADICTED, tuple(entity_findings))
     if HEDGE_RE.search(evidence) and not HEDGE_RE.search(claim):
         return FactInspection(Label.PARTIALLY_SUPPORTED, ("Evidence is hedged or inconclusive.",))
     if UNIVERSAL_RE.search(claim) and NARROW_RE.search(evidence):

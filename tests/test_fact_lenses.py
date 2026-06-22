@@ -171,6 +171,47 @@ def test_different_comparison_context_is_partial_support() -> None:
     assert any("Comparison context mismatch" in finding for finding in result.findings)
 
 
+def test_comparison_context_mismatch_outranks_entity_conflict() -> None:
+    result = inspect_facts(
+        "LoRA outperforms Prefix Tuning on GLUE.",
+        "Prefix Tuning outperforms LoRA on SQuAD.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert any("Comparison context mismatch" in finding for finding in result.findings)
+    assert not any("Entity conflict" in finding for finding in result.findings)
+
+
+def test_numeric_conflict_outranks_comparison_context_mismatch() -> None:
+    result = inspect_facts(
+        "LoRA outperforms Prefix Tuning by 5% on GLUE.",
+        "Prefix Tuning outperforms LoRA by 7% on SQuAD.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Numeric conflict" in finding for finding in result.findings)
+
+
+def test_for_comparison_context_is_partial_support() -> None:
+    result = inspect_facts(
+        "AlphaModel is better than BetaModel for latency.",
+        "BetaModel is better than AlphaModel for accuracy.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert any("Comparison context mismatch" in finding for finding in result.findings)
+
+
+def test_for_metric_comparison_context_is_partial_support() -> None:
+    result = inspect_facts(
+        "AlphaModel is better than BetaModel for F1.",
+        "BetaModel is better than AlphaModel for accuracy.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert any("Comparison context mismatch" in finding for finding in result.findings)
+
+
 def test_different_comparison_dimension_is_partial_support() -> None:
     result = inspect_facts(
         "AlphaModel is better than BetaModel in latency.",

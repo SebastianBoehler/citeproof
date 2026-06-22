@@ -18,14 +18,14 @@ COMPARISON_RE = re.compile(
     re.IGNORECASE,
 )
 COMPARISON_CONTEXT_PREFIX_RE = re.compile(
-    r"^\s*(?:on|in)\s+(?P<context>[^,]+),\s*(?P<body>.+)$", re.IGNORECASE
+    r"^\s*(?:on|in|for)\s+(?P<context>[^,]+),\s*(?P<body>.+)$", re.IGNORECASE
 )
 COMPARISON_BENCHMARK_PREFIX_RE = re.compile(
     r"^\s*(?:the\s+)?(?P<context>.+?)\s+benchmark\s+shows\s+(?P<body>.+)$",
     re.IGNORECASE,
 )
 COMPARISON_CONTEXT_SUFFIX_RE = re.compile(
-    r"(?P<right>.+?)\s+(?:on|in)\s+(?P<context>.+)$", re.IGNORECASE
+    r"(?P<right>.+?)\s+(?:on|in|for)\s+(?P<context>.+)$", re.IGNORECASE
 )
 COMPARISON_RELATIONS = {
     "outperforms": "generic",
