@@ -140,6 +140,11 @@ The conservative ordering is:
 4. Hedged, narrower, or incomplete evidence -> `partially_supported`
 5. Source silence -> `unsupported`
 
+Strict verification results include a trust trace when available. The trace
+records source-gate status, atom-level labels, selected rationale spans, stable
+failure modes, and a review action. This lets a writer or agent repair the
+specific unsupported atom instead of guessing why a claim failed.
+
 The most important product metric is false-supported rate: cases where the
 system says `supported` while the expected label is anything else.
 

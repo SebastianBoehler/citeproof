@@ -31,6 +31,8 @@ def results_to_markdown(results: list[VerificationResult]) -> str:
                 "",
                 f"**Reason:** {result.reason}",
                 "",
+                f"**Failure mode:** {result.failure_mode.value if result.failure_mode else 'none'}",
+                "",
             ]
         )
         for evidence_index, evidence in enumerate(result.evidence, start=1):
@@ -42,6 +44,12 @@ def results_to_markdown(results: list[VerificationResult]) -> str:
                     "",
                 ]
             )
+        if result.trace:
+            lines.extend(["**Atoms:**", ""])
+            for atom in result.trace.atom_verifications:
+                mode = atom.failure_mode.value if atom.failure_mode else "none"
+                lines.append(f"- `{atom.label.value}` {atom.text} (failure={mode})")
+            lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 

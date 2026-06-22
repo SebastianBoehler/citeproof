@@ -12,6 +12,26 @@ def test_detects_multi_number_conflict_with_units() -> None:
     assert any("4 GPUs" in finding for finding in result.findings)
 
 
+def test_detects_unit_conflict_for_same_number() -> None:
+    result = inspect_facts(
+        "The evaluation used 42 percent of the dataset.",
+        "The evaluation used 42 examples from the dataset.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Unit conflict" in finding for finding in result.findings)
+
+
+def test_does_not_flag_unit_conflict_when_units_overlap() -> None:
+    result = inspect_facts(
+        "The evaluation used 42 percent of the dataset.",
+        "The evaluation used 42 percent of the dataset, or 42 examples.",
+    )
+
+    assert result.label != Label.CONTRADICTED
+    assert not any("Unit conflict" in finding for finding in result.findings)
+
+
 def test_detects_year_conflict() -> None:
     result = inspect_facts(
         "Qwen2.5 Technical Report was published in 2025.",

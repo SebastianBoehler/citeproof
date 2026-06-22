@@ -66,6 +66,51 @@ def test_reduce_negation_is_not_supported() -> None:
     assert judgment.label == Label.CONTRADICTED
 
 
+def test_detects_metric_negation_as_contradiction() -> None:
+    judgment = judge_evidence(
+        "Method X improves F1 score over the baseline.",
+        "Method X improves accuracy over the baseline, with no F1 score improvement.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+
+
+def test_metric_negation_does_not_contradict_different_supported_metric() -> None:
+    judgment = judge_evidence(
+        "Method X improves accuracy over the baseline.",
+        "Method X improves accuracy over the baseline, with no F1 score improvement.",
+    )
+
+    assert judgment.label == Label.SUPPORTED
+
+
+def test_metric_negation_in_form_does_not_contradict_different_supported_metric() -> None:
+    judgment = judge_evidence(
+        "Method X improves accuracy over the baseline.",
+        "Method X improves accuracy over the baseline, with no improvement in F1.",
+    )
+
+    assert judgment.label == Label.SUPPORTED
+
+
+def test_accuracy_negation_does_not_contradict_supported_f1_metric() -> None:
+    judgment = judge_evidence(
+        "Method X improves F1 score over the baseline.",
+        "Method X improves F1 score over the baseline, with no improvement in accuracy.",
+    )
+
+    assert judgment.label == Label.SUPPORTED
+
+
+def test_detects_accuracy_metric_negation_as_contradiction() -> None:
+    judgment = judge_evidence(
+        "Method X improves accuracy over the baseline.",
+        "Method X improves F1 score over the baseline, with no accuracy improvement.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+
+
 def test_detects_metric_paraphrase_support() -> None:
     judgment = judge_evidence(
         "BERTScore captures semantic similarity beyond exact lexical overlap.",

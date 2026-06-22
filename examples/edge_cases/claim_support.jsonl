@@ -10,3 +10,6 @@
 {"id":"entity-swap","claim":"LoRA freezes pretrained weights and trains rank-decomposition matrices.","evidence":"QLoRA quantizes pretrained weights to 4-bit precision and trains LoRA adapters.","expected_label":"partially_supported"}
 {"id":"compound-dataset-partial","claim":"WildChat contains 1M conversations and provides medical expert annotations.","evidence":"WildChat contains 1M ChatGPT interaction logs spanning diverse topics and languages.","expected_label":"partially_supported"}
 {"id":"compound-dataset-supported","claim":"WildChat contains 1M conversations and spans diverse languages.","evidence":"WildChat contains 1M ChatGPT interaction logs and covers multiple languages.","expected_label":"supported"}
+{"id":"unit-conflict","claim":"The evaluation used 42 percent of the dataset.","evidence":"The evaluation used 42 examples from the dataset.","expected_label":"contradicted"}
+{"id":"metric-swap","claim":"Method X improves F1 score over the baseline.","evidence":"Method X improves accuracy over the baseline, with no F1 score improvement.","expected_label":"contradicted"}
+{"id":"neighboring-paragraph-support","claim":"Method X reduces training time.","evidence":"The first paragraph describes setup. Training with Method X required half as many hours as the baseline. The next paragraph discusses limitations.","expected_label":"supported"}

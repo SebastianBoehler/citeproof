@@ -33,8 +33,26 @@ def test_eval_cases_include_trust_diagnostics(tmp_path: Path) -> None:
             "expected_label": "unsupported",
             "predicted_label": "supported",
             "confidence": 0.95,
+            "failure_mode": None,
             "false_supported": True,
             "pass": False,
             "reason": "Verifier gates agree.",
         }
     ]
+
+
+def test_eval_cases_report_structured_failure_modes(tmp_path: Path) -> None:
+    dataset = tmp_path / "eval.jsonl"
+    dataset.write_text(
+        '{"id":"unit-conflict","claim":"The evaluation used 42 percent of the dataset.",'
+        '"evidence":"The evaluation used 42 examples from the dataset.",'
+        '"expected_label":"contradicted"}\n'
+        '{"id":"metric-negation","claim":"Method X improves F1 score over the baseline.",'
+        '"evidence":"Method X improves accuracy over the baseline, with no F1 score improvement.",'
+        '"expected_label":"contradicted"}\n',
+        encoding="utf-8",
+    )
+
+    cases = run_eval_cases(dataset)
+
+    assert [case["failure_mode"] for case in cases] == ["unit_conflict", "negation_conflict"]

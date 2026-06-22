@@ -28,7 +28,11 @@ class _NumberMention:
 def inspect_facts(claim: str, evidence: str) -> FactInspection:
     """Return deterministic conflicts or partial-support signals."""
 
-    findings = _number_conflicts(claim, evidence) + _year_conflicts(claim, evidence)
+    findings = (
+        _number_conflicts(claim, evidence)
+        + _unit_conflicts(claim, evidence)
+        + _year_conflicts(claim, evidence)
+    )
     if findings:
         return FactInspection(Label.CONTRADICTED, tuple(findings))
     if HEDGE_RE.search(evidence) and not HEDGE_RE.search(claim):
@@ -55,12 +59,33 @@ def _number_conflicts(claim: str, evidence: str) -> list[str]:
     return findings
 
 
+def _unit_conflicts(claim: str, evidence: str) -> list[str]:
+    claim_numbers = _numbers_to_units(claim)
+    evidence_numbers = _numbers_to_units(evidence)
+    findings: list[str] = []
+    for number, claim_units in claim_numbers.items():
+        evidence_units = evidence_numbers.get(number, set())
+        if evidence_units and not claim_units & evidence_units:
+            findings.append(
+                f"Unit conflict for {number}: claim {sorted(claim_units)} vs evidence {sorted(evidence_units)}"
+            )
+    return findings
+
+
 def _year_conflicts(claim: str, evidence: str) -> list[str]:
     claim_years = set(YEAR_RE.findall(claim))
     evidence_years = set(YEAR_RE.findall(evidence))
     if claim_years and evidence_years and claim_years != evidence_years:
         return [f"Year conflict: claim {sorted(claim_years)} vs evidence {sorted(evidence_years)}"]
     return []
+
+
+def _numbers_to_units(text: str) -> dict[str, set[str]]:
+    numbers: dict[str, set[str]] = {}
+    for unit, mentions in _number_units(text).items():
+        for mention in mentions:
+            numbers.setdefault(mention.number, set()).add(unit)
+    return numbers
 
 
 def _number_units(text: str) -> dict[str, tuple[_NumberMention, ...]]:
