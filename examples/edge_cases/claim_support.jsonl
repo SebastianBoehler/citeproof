@@ -19,3 +19,4 @@
 {"id":"unit-overlap-not-conflict","claim":"The evaluation used 42 percent of the dataset.","evidence":"The evaluation used 42 percent of the dataset, corresponding to 42 examples.","expected_label":"supported"}
 {"id":"material-anchor-swap","claim":"LoRA improves accuracy over full fine-tuning on GLUE.","evidence":"Prefix Tuning improves accuracy over full fine-tuning on GLUE.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"comparison-direction-swap","claim":"LoRA outperforms Prefix Tuning on GLUE.","evidence":"Prefix Tuning outperforms LoRA on GLUE.","expected_label":"contradicted","expected_failure_mode":"comparison_direction_conflict"}
+{"id":"comparison-beats-swap","claim":"LoRA beats Prefix Tuning on GLUE.","evidence":"Prefix Tuning beats LoRA on GLUE.","expected_label":"contradicted","expected_failure_mode":"comparison_direction_conflict"}
