@@ -25,7 +25,12 @@ SUBSET_LIMIT_RE = re.compile(
 )
 CASE_STUDY_RE = re.compile(r"\b(?:one|single)\s+case\s+study\b|\bcase\s+study\b", re.IGNORECASE)
 SIMULATION_RE = re.compile(r"\bsimulat(?:ed|ion)\b", re.IGNORECASE)
-HARDWARE_RE = re.compile(r"\bhardware\b|\breal[- ]world\b", re.IGNORECASE)
+HARDWARE_RE = re.compile(r"\bhardware\b|\breal[- ](?:user|world)\b", re.IGNORECASE)
+REAL_SETTING_NOT_EVALUATED_RE = re.compile(
+    r"\b(?:hardware|real[- ](?:user|world))\b.{0,60}\bnot\s+evaluated\b|"
+    r"\bnot\s+evaluated\b.{0,60}\b(?:hardware|real[- ](?:user|world))\b",
+    re.IGNORECASE,
+)
 IN_VITRO_RE = re.compile(r"\bin\s+vitro\b|\bex\s+vivo\b", re.IGNORECASE)
 HUMAN_RE = re.compile(r"\bhumans?\b|\bpatients?\b|\badults?\b", re.IGNORECASE)
 ANIMAL_RE = re.compile(r"\bmice\b|\bmouse\b|\brats?\b", re.IGNORECASE)
@@ -85,7 +90,11 @@ def _evidence_is_limited_beyond_claim(claim: str, evidence: str) -> bool:
         or _has_new_limiter(SUBGROUP_LIMIT_RE, claim, evidence)
         or _has_new_limiter(SUBSET_LIMIT_RE, claim, evidence)
         or _has_new_limiter(CASE_STUDY_RE, claim, evidence)
-        or (SIMULATION_RE.search(evidence) and not SIMULATION_RE.search(claim))
+        or (
+            SIMULATION_RE.search(evidence)
+            and REAL_SETTING_NOT_EVALUATED_RE.search(evidence)
+            and not SIMULATION_RE.search(claim)
+        )
         or (IN_VITRO_RE.search(evidence) and not IN_VITRO_RE.search(claim))
     )
 

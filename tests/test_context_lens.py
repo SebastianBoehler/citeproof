@@ -62,6 +62,14 @@ def test_ignores_matching_simulation_scope() -> None:
     ) == ()
 
 
+def test_ignores_simulated_task_evidence_without_real_world_claim() -> None:
+    assert inspect_context_tensions(
+        "Adaptive replay improves sample efficiency in sparse-reward manipulation tasks.",
+        "Adaptive replay improves sample efficiency in sparse-reward manipulation tasks. "
+        "Across five simulated robotics tasks, the method reached the target success threshold.",
+    ) == ()
+
+
 def test_ignores_matching_case_study_scope() -> None:
     assert inspect_context_tensions(
         "The tool improves productivity in one case study.",

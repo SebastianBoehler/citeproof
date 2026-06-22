@@ -141,6 +141,18 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
         "dataset-code-license-role-conflict",
         "label-source-role-conflict",
         "retrieval-source-role-conflict",
+        "oracle-condition-context-tension",
+        "simulation-hardware-context-tension",
+        "subset-context-tension",
+        "human-animal-context-tension",
+        "patient-invitro-context-tension",
+        "case-study-context-tension",
+        "component-exclusion-conflict",
+        "condition-only-validation-labels",
+        "subgroup-only-low-risk",
+        "simulation-only-factuality",
+        "human-prefilter-condition",
+        "matched-distribution-condition",
     } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)
