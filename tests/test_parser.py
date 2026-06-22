@@ -71,6 +71,18 @@ def test_parse_claims_splits_comma_whereas_citation_clauses() -> None:
     ]
 
 
+def test_parse_claims_splits_comma_while_copula_claims() -> None:
+    claims = parse_claims(
+        "LoRA is effective on GLUE \\cite{lora2021}, "
+        "while Prefix Tuning is effective on SQuAD \\cite{prefix2021}."
+    )
+
+    assert claims == [
+        Claim("LoRA is effective on GLUE.", ("lora2021",)),
+        Claim("Prefix Tuning is effective on SQuAD.", ("prefix2021",)),
+    ]
+
+
 def test_parse_claims_splits_comma_and_citation_clauses() -> None:
     claims = parse_claims(
         "LoRA improves accuracy on GLUE \\cite{lora2021}, "
@@ -100,6 +112,19 @@ def test_split_citation_clauses_keeps_sentence_when_middle_piece_is_uncited() ->
     )
 
     assert split_citation_clauses(sentence) == [sentence]
+
+
+def test_parse_claims_does_not_split_coordinated_citation_list() -> None:
+    claims = parse_claims(
+        "We compare LoRA \\cite{lora2021}, and Prefix Tuning \\cite{prefix2021} on GLUE."
+    )
+
+    assert claims == [
+        Claim(
+            "We compare LoRA, and Prefix Tuning on GLUE.",
+            ("lora2021", "prefix2021"),
+        )
+    ]
 
 
 def test_parse_claims_drops_latex_tables_and_comments() -> None:
