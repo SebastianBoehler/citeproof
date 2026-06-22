@@ -219,3 +219,13 @@ def test_detects_numeric_bound_fact_tension() -> None:
 
     assert result.label == Label.PARTIALLY_SUPPORTED
     assert any("Numeric bound tension" in finding for finding in result.findings)
+
+
+def test_does_not_contradict_compatible_lower_bound_quantity() -> None:
+    result = inspect_facts(
+        "Schema-Guided Dialogue contains at least 16k task-oriented dialogues.",
+        "Schema-Guided Dialogue contains 20,000 task-oriented dialogues.",
+    )
+
+    assert result.label != Label.CONTRADICTED
+    assert not any("Numeric conflict" in finding for finding in result.findings)

@@ -26,6 +26,14 @@ YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 HEDGE_RE = re.compile(r"\b(may|might|could|inconclusive|suggests|preliminary)\b", re.IGNORECASE)
 UNIVERSAL_RE = re.compile(r"\b(all|always|every|universally)\b", re.IGNORECASE)
 NARROW_RE = re.compile(r"\b(only|some|subset|two|few|limited)\b", re.IGNORECASE)
+QUANTITY_LOWER_BOUND_RE = re.compile(
+    r"\b(over|more\s+than|greater\s+than|at\s+least|no\s+less\s+than)\b",
+    re.IGNORECASE,
+)
+QUANTITY_UPPER_BOUND_RE = re.compile(
+    r"\b(up\s+to|at\s+most|no\s+more\s+than|under|less\s+than)\b",
+    re.IGNORECASE,
+)
 GENERIC_ANCHORS = {
     "Ablation",
     "Appendix",
@@ -95,6 +103,8 @@ def _number_conflicts(claim: str, evidence: str) -> list[str]:
         claim_numbers = {item.number for item in claim_items}
         evidence_numbers = {item.number for item in evidence_items}
         if claim_numbers != evidence_numbers:
+            if compatible_bounded_quantity(claim_items, evidence_items, claim, evidence):
+                continue
             claim_text = ", ".join(item.text for item in claim_items)
             evidence_text = ", ".join(item.text for item in evidence_items)
             findings.append(f"Numeric conflict for {unit}: claim {claim_text} vs evidence {evidence_text}")
@@ -190,3 +200,32 @@ def _quantity_mentions_by_unit(text: str) -> dict[str, tuple[QuantityMention, ..
     for mention in quantity_mentions(text):
         mentions.setdefault(mention.unit, []).append(mention)
     return {unit: tuple(items) for unit, items in mentions.items()}
+
+
+def compatible_bounded_quantity(
+    claim_items: tuple[QuantityMention, ...],
+    evidence_items: tuple[QuantityMention, ...],
+    claim: str,
+    evidence: str,
+) -> bool:
+    if len(claim_items) != 1 or len(evidence_items) != 1:
+        return False
+    claim_bound = _quantity_bound(claim, claim_items[0])
+    evidence_bound = _quantity_bound(evidence, evidence_items[0])
+    if evidence_bound != "exact":
+        return False
+    if claim_bound == "lower":
+        return evidence_items[0].number >= claim_items[0].number
+    if claim_bound == "upper":
+        return evidence_items[0].number <= claim_items[0].number
+    return False
+
+
+def _quantity_bound(text: str, mention: QuantityMention) -> str:
+    start = text.find(mention.text)
+    prefix = text[max(0, start - 32) : start] if start >= 0 else ""
+    if QUANTITY_LOWER_BOUND_RE.search(prefix):
+        return "lower"
+    if QUANTITY_UPPER_BOUND_RE.search(prefix):
+        return "upper"
+    return "exact"

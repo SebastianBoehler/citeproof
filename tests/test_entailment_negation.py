@@ -48,6 +48,15 @@ def test_judge_evidence_marks_bound_equality_tension_partial() -> None:
     assert judgment.label == Label.PARTIALLY_SUPPORTED
 
 
+def test_judge_evidence_supports_compatible_lower_bound() -> None:
+    judgment = judge_evidence(
+        "Schema-Guided Dialogue contains at least 16k task-oriented dialogues.",
+        "Schema-Guided Dialogue contains 20,000 task-oriented dialogues.",
+    )
+
+    assert judgment.label == Label.SUPPORTED
+
+
 def test_adjudicator_maps_negation_conflict_failure_mode() -> None:
     judgment = adjudicate_evidence(
         "The method uses LoRA adapters.",

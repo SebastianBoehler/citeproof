@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from citeproof.fact_lenses import inspect_facts
+from citeproof.fact_lenses import compatible_bounded_quantity, inspect_facts
 from citeproof.models import EvidenceJudgment, Label
 from citeproof.quantities import quantity_mentions
 from citeproof.text import token_overlap_ratio
@@ -187,6 +187,7 @@ def _has_numeric_conflict(claim: str, evidence: str) -> bool:
     return (
         claim_mention.unit == evidence_mention.unit
         and claim_mention.number != evidence_mention.number
+        and not compatible_bounded_quantity((claim_mention,), (evidence_mention,), claim, evidence)
     )
 
 
