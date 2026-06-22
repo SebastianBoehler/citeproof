@@ -136,3 +136,21 @@ def test_language_negation_is_not_supported() -> None:
     )
 
     assert judgment.label != Label.SUPPORTED
+
+
+def test_method_anchor_swap_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "LoRA improves accuracy over full fine-tuning on GLUE.",
+        "Prefix tuning improves accuracy over full fine-tuning on GLUE.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+
+
+def test_dataset_anchor_swap_is_not_supported() -> None:
+    judgment = judge_evidence(
+        "LoRA improves accuracy on GLUE.",
+        "LoRA improves accuracy on SQuAD.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED

@@ -57,3 +57,77 @@ def test_detects_scope_gap_partial_support() -> None:
     )
 
     assert result.label == Label.PARTIALLY_SUPPORTED
+
+
+def test_detects_missing_material_anchor() -> None:
+    result = inspect_facts(
+        "LoRA improves accuracy over full fine-tuning on GLUE.",
+        "Prefix tuning improves accuracy over full fine-tuning on GLUE.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("Entity conflict" in finding for finding in result.findings)
+    assert any("LoRA" in finding for finding in result.findings)
+    assert any("Prefix tuning" in finding for finding in result.findings)
+
+
+def test_detects_dataset_anchor_swap() -> None:
+    result = inspect_facts(
+        "LoRA improves accuracy on GLUE.",
+        "LoRA improves accuracy on SQuAD.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("GLUE" in finding for finding in result.findings)
+    assert any("SQuAD" in finding for finding in result.findings)
+
+
+def test_ignores_single_letter_placeholders_as_anchors() -> None:
+    result = inspect_facts(
+        "Method X improves accuracy over the baseline.",
+        "Method X improves accuracy over the baseline.",
+    )
+
+    assert result.label is None
+    assert result.findings == ()
+
+
+def test_ignores_acronym_expansion_without_competing_anchor() -> None:
+    result = inspect_facts(
+        "USA models improve accuracy over the baseline.",
+        "United States models improve accuracy over the baseline.",
+    )
+
+    assert result.label is None
+    assert result.findings == ()
+
+
+def test_ignores_lowercase_method_expansion_without_competing_anchor() -> None:
+    result = inspect_facts(
+        "CNN improves accuracy over the baseline.",
+        "A convolutional neural network improves accuracy over the baseline.",
+    )
+
+    assert result.label is None
+    assert result.findings == ()
+
+
+def test_partial_anchor_coverage_is_not_entity_conflict() -> None:
+    result = inspect_facts(
+        "LoRA improves accuracy on GLUE and SQuAD.",
+        "LoRA improves accuracy on GLUE.",
+    )
+
+    assert result.label is None
+    assert result.findings == ()
+
+
+def test_gpt4_anchor_does_not_match_gpt4o() -> None:
+    result = inspect_facts(
+        "GPT-4 improves accuracy on GLUE.",
+        "GPT-4o improves accuracy on GLUE.",
+    )
+
+    assert result.label == Label.CONTRADICTED
+    assert any("GPT-4" in finding for finding in result.findings)
+    assert any("GPT-4o" in finding for finding in result.findings)
