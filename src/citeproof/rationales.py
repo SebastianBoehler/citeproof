@@ -4,9 +4,20 @@ from __future__ import annotations
 
 from collections import Counter
 from math import sqrt
+import re
 
 from citeproof.models import Claim, EvidenceCandidate, SourceChunk
 from citeproof.text import split_sentences, tokenize
+
+CONFLICT_RERANK_BONUS = 0.22
+CONFLICT_CUE_RE = re.compile(
+    r"\b("
+    r"unchanged|no\s+change|no\s+difference|no\s+improvement|no\s+reduction|"
+    r"does\s+not\s+improve|did\s+not\s+improve|failed\s+to\s+improve|"
+    r"not\s+statistically\s+significant|comparable\s+to|equivalent\s+to|worse\s+than"
+    r")\b",
+    re.IGNORECASE,
+)
 
 
 def select_rationales(
@@ -21,10 +32,16 @@ def select_rationales(
     scored: list[EvidenceCandidate] = []
     for chunk in chunks:
         for window in _sentence_windows(chunk.text, window_radius):
-            score = _lexical_score(claim.text, window)
-            if score >= min_score:
-                scored.append(_candidate(chunk, window, score))
-    ranked = sorted(scored, key=lambda item: item.lexical_score, reverse=True)[:limit]
+            lexical_score = _lexical_score(claim.text, window)
+            if lexical_score < min_score:
+                continue
+            rerank_score = lexical_score + _conflict_rerank_bonus(window)
+            scored.append(_candidate(chunk, window, lexical_score, rerank_score))
+    ranked = sorted(
+        scored,
+        key=lambda item: (item.rerank_score or item.lexical_score, item.lexical_score),
+        reverse=True,
+    )[:limit]
     return tuple(
         EvidenceCandidate(
             source_id=item.source_id,
@@ -55,7 +72,12 @@ def _sentence_windows(text: str, radius: int) -> tuple[str, ...]:
     return tuple(dict.fromkeys(windows))
 
 
-def _candidate(chunk: SourceChunk, text: str, score: float) -> EvidenceCandidate:
+def _candidate(
+    chunk: SourceChunk,
+    text: str,
+    lexical_score: float,
+    rerank_score: float,
+) -> EvidenceCandidate:
     return EvidenceCandidate(
         source_id=chunk.source_id,
         citation_key=chunk.citation_key,
@@ -63,7 +85,8 @@ def _candidate(chunk: SourceChunk, text: str, score: float) -> EvidenceCandidate
         chunk_id=chunk.chunk_id,
         title=chunk.title,
         page=chunk.page,
-        lexical_score=round(score, 4),
+        lexical_score=round(lexical_score, 4),
+        rerank_score=round(rerank_score, 4),
         retrieval_method="sentence_window",
     )
 
@@ -77,3 +100,7 @@ def _lexical_score(claim: str, evidence: str) -> float:
     evidence_counts = Counter(evidence_terms)
     overlap = sum(min(count, evidence_counts[term]) for term, count in claim_counts.items())
     return overlap / sqrt(len(claim_terms) * len(evidence_terms))
+
+
+def _conflict_rerank_bonus(text: str) -> float:
+    return CONFLICT_RERANK_BONUS if CONFLICT_CUE_RE.search(text) else 0.0

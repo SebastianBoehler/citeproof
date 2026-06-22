@@ -172,7 +172,7 @@ def test_lower_ranked_contradiction_blocks_supported() -> None:
     atom = result.trace.atom_verifications[0]
     assert result.label == Label.CONTRADICTED
     assert atom.best_support_rank == 1
-    assert atom.best_contradiction_rank == 5
+    assert atom.best_contradiction_rank == 2
     assert atom.contradiction_candidate_count == 1
 
 

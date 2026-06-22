@@ -44,3 +44,32 @@ def test_select_rationale_returns_empty_for_source_silence() -> None:
     )
 
     assert candidates == ()
+
+
+def test_select_rationale_promotes_relevant_conflict_cue_window() -> None:
+    distractors = " ".join(
+        f"Method X improves accuracy over PPO in robotics benchmark {index}."
+        for index in range(8)
+    )
+    chunk = SourceChunk(
+        source_id="paper",
+        citation_key="paper",
+        chunk_id="paper:0",
+        text=(
+            f"{distractors} "
+            "Calibration remains unchanged after applying the method. "
+            "The reliability curve shows no difference from PPO."
+        ),
+    )
+
+    candidates = select_rationales(
+        Claim("Method X improves calibration over PPO.", ("paper",)),
+        [chunk],
+        limit=1,
+        min_score=0.08,
+    )
+
+    assert len(candidates) == 1
+    assert "Calibration remains unchanged" in candidates[0].text
+    assert candidates[0].rerank_score is not None
+    assert candidates[0].rerank_score > candidates[0].lexical_score
