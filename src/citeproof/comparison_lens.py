@@ -14,7 +14,8 @@ AnchorNormalizer = Callable[[str], str]
 COMPARISON_RE = re.compile(
     r"(?P<left>.+?)\s+"
     r"(?P<relation>beats|outperforms|outperformed|exceeds|is better than|is superior to|"
-    r"has higher accuracy than|achieves higher accuracy than|has lower error than)\s+"
+    r"has higher accuracy than|achieves higher accuracy than|has lower error than|"
+    r"ties|is tied with|matches|is comparable to)\s+"
     r"(?P<right>.+?)(?:\.|$)",
     re.IGNORECASE,
 )
@@ -33,6 +34,7 @@ COMPARISON_BENCHMARK_PREFIX_RE = re.compile(
 COMPARISON_CONTEXT_SUFFIX_RE = re.compile(
     r"(?P<right>.+?)\s+(?:on|in|for)\s+(?P<context>.+)$", re.IGNORECASE
 )
+PLACEHOLDER_ANCHOR_RE = re.compile(r"\b(?:Method|Model|System|Dataset|Benchmark)\s+[A-Z]\b")
 
 @dataclass(frozen=True)
 class ComparisonInspection:
@@ -64,6 +66,10 @@ COMPARISON_RELATIONS = {
     "has higher accuracy than": _RelationSpec("higher_is_better", "accuracy"),
     "achieves higher accuracy than": _RelationSpec("higher_is_better", "accuracy"),
     "has lower error than": _RelationSpec("lower_is_better", "error"),
+    "ties": _RelationSpec("neutral", "generic"),
+    "is tied with": _RelationSpec("neutral", "generic"),
+    "matches": _RelationSpec("neutral", "generic"),
+    "is comparable to": _RelationSpec("neutral", "generic"),
 }
 
 
@@ -79,6 +85,15 @@ def inspect_comparison_direction(
         return ComparisonInspection(None)
     if not _same_comparison_pair(claim_comparison, evidence_comparison, normalize_anchor):
         return ComparisonInspection(None)
+    if _neutral_strength_mismatch(claim_comparison, evidence_comparison):
+        return ComparisonInspection(
+            Label.PARTIALLY_SUPPORTED,
+            (
+                "Comparison strength mismatch: claim "
+                f"{_relation_label(claim_comparison.relation)} vs evidence "
+                f"{_relation_label(evidence_comparison.relation)}",
+            ),
+        )
     if claim_comparison.relation != evidence_comparison.relation:
         return ComparisonInspection(
             Label.PARTIALLY_SUPPORTED,
@@ -97,7 +112,9 @@ def inspect_comparison_direction(
                 f"{', '.join(evidence_comparison.context)}",
             ),
         )
-    if _comparison_direction_reversed(claim_comparison, evidence_comparison, normalize_anchor):
+    if claim_comparison.relation.family != "neutral" and _comparison_direction_reversed(
+        claim_comparison, evidence_comparison, normalize_anchor
+    ):
         return ComparisonInspection(
             Label.CONTRADICTED,
             (
@@ -177,6 +194,13 @@ def _relation_label(relation: _RelationSpec) -> str:
     return f"{relation.family}/{relation.dimension}"
 
 
+def _neutral_strength_mismatch(claim: _Comparison, evidence: _Comparison) -> bool:
+    return claim.relation.family != evidence.relation.family and "neutral" in {
+        claim.relation.family,
+        evidence.relation.family,
+    }
+
+
 def _same_comparison_pair(
     claim: _Comparison,
     evidence: _Comparison,
@@ -236,5 +260,6 @@ def _normalize_context_key(text: str) -> str:
 def _comparison_anchor(text: str, material_anchors: AnchorExtractor) -> str | None:
     anchors = material_anchors(text)
     if len(anchors) != 1:
-        return None
+        placeholder = PLACEHOLDER_ANCHOR_RE.search(text)
+        return placeholder.group(0) if placeholder else None
     return anchors[0]

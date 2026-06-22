@@ -204,3 +204,13 @@ def test_lower_error_vs_higher_accuracy_dimension_is_partial_support() -> None:
 
     assert result.label == Label.PARTIALLY_SUPPORTED
     assert any("Comparison dimension mismatch" in finding for finding in result.findings)
+
+
+def test_tie_does_not_support_outperform_claim() -> None:
+    result = inspect_facts(
+        "Method X outperforms Method Y.",
+        "Method X ties Method Y.",
+    )
+
+    assert result.label == Label.PARTIALLY_SUPPORTED
+    assert any("Comparison strength mismatch" in finding for finding in result.findings)
