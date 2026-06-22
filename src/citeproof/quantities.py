@@ -39,7 +39,7 @@ _WORD_NUMBER = (
 )
 _WORD_UNIT = (
     r"percent|arms?|centers?|centres?|cohorts?|conversations?|days?|dialogues?|domains?|"
-    r"doses?|examples?|g|gpus?|groups?|hours?|kg|languages?|mg|minutes?|ml|months?|"
+    r"doses?|examples?|g|gpus?|groups?|heads?|hours?|kg|languages?|layers?|mg|minutes?|ml|months?|"
     r"parameters?|"
     r"participants?|patients?|samples?|seconds?|sites?|studies|subjects?|trials?|turns?|"
     r"tokens?|weeks?|years?"

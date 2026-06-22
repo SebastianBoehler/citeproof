@@ -139,3 +139,9 @@
 {"id":"compact-parameter-count-conflict","claim":"The model has 7B parameters.","evidence":"The model has 13B parameters.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
 {"id":"context-token-count-conflict","claim":"The context window is 32k tokens.","evidence":"The context window is 128k tokens.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
 {"id":"benchmark-version-conflict","claim":"The evaluation uses MMLU-Pro.","evidence":"The evaluation uses MMLU.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"architecture-family-conflict","claim":"GPT-3 uses a mixture-of-experts transformer architecture.","evidence":"GPT-3 uses a dense transformer architecture.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"pretraining-objective-conflict","claim":"BERT uses a causal language modeling objective.","evidence":"BERT uses a masked language modeling objective.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"shot-setting-conflict","claim":"The model is evaluated in a zero-shot setting.","evidence":"The model is evaluated in a few-shot setting.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"decoding-strategy-conflict","claim":"The system decodes with greedy search.","evidence":"The system decodes with beam search.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"layer-count-conflict","claim":"The model has 12 layers.","evidence":"The model has 24 layers.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"attention-head-count-conflict","claim":"The model uses 16 attention heads.","evidence":"The model uses 32 attention heads.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}

@@ -30,6 +30,10 @@ TECHNICAL_PROPERTY_CONFLICTS = (
     "evaluation domain conflict",
     "data sensitivity conflict",
     "trainable scope conflict",
+    "architecture family conflict",
+    "pretraining objective conflict",
+    "evaluation setting conflict",
+    "decoding strategy conflict",
 )
 STATISTICAL_CONFLICTS = (
     "auroc averaging conflict",

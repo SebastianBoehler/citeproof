@@ -106,6 +106,15 @@ def test_quantity_units_normalizes_billion_suffix() -> None:
     }
 
 
+def test_quantity_units_recognizes_architecture_counts() -> None:
+    quantities = quantity_units("The model has 12 layers and 16 attention heads.")
+
+    assert quantities == {
+        "layer": (Decimal("12"),),
+        "head": (Decimal("16"),),
+    }
+
+
 def test_quantity_units_normalizes_percent_units() -> None:
     quantities = quantity_units("Accuracy rose by 5 percent and recall rose by 7%.")
 

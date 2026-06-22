@@ -81,14 +81,59 @@ GROUPS = (
             ),
         ),
     ),
+    TechnicalPropertyGroup(
+        "Architecture family",
+        (
+            ("dense transformer", (r"\bdense\s+transformer\b",)),
+            (
+                "mixture-of-experts",
+                (r"\bmixture[- ]of[- ]experts\b", r"\bmoe\b"),
+            ),
+        ),
+    ),
+    TechnicalPropertyGroup(
+        "Pretraining objective",
+        (
+            (
+                "causal language modeling",
+                (r"\bcausal\s+language\s+model(?:ing)?\b", r"\bclm\b"),
+            ),
+            (
+                "masked language modeling",
+                (r"\bmasked\s+language\s+model(?:ing)?\b", r"\bmlm\b"),
+            ),
+            (
+                "replaced-token detection",
+                (r"\breplaced[- ]token\s+detection\b", r"\brtd\b"),
+            ),
+        ),
+    ),
+    TechnicalPropertyGroup(
+        "Evaluation setting",
+        (
+            ("zero-shot", (r"\bzero[- ]shot\b",)),
+            ("one-shot", (r"\bone[- ]shot\b",)),
+            ("few-shot", (r"\bfew[- ]shot\b",)),
+        ),
+    ),
+    TechnicalPropertyGroup(
+        "Decoding strategy",
+        (
+            ("greedy search", (r"\bgreedy\s+(?:search|decoding)\b",)),
+            ("beam search", (r"\bbeam\s+(?:search|decoding)\b",)),
+            ("sampling", (r"\bsampling\b", r"\bsample[- ]based\s+decoding\b")),
+        ),
+    ),
 )
 
 TRIGGER_WORDS_RE = re.compile(
     r"\b("
-    r"adapter|all|approximate|approximation|base|constant|cubic|data|dense|domain|exact|"
-    r"exponential|fine|fixed|frozen|inference|keeps?|kept|linear|logarithmic|"
-    r"low|medical|model|out|parameters|pretrained|private|public|quadratic|rank|"
-    r"records?|rewards?|sparse|time|tuned|tuning|weights?"
+    r"adapter|all|approximate|approximation|architecture|base|beam|causal|clm|constant|"
+    r"cubic|data|decod(?:e|es|ed|ing)|dense|detection|domain|exact|experts?|"
+    r"exponential|few|fine|fixed|frozen|greedy|inference|keeps?|kept|language|linear|"
+    r"logarithmic|low|masked|medical|mlm|model|modeling|moe|objective|one|out|"
+    r"parameters|pretrained|private|public|quadratic|rank|records?|replaced|rewards?|"
+    r"rtd|sampling|search|shot|sparse|time|token|transformer|tuned|tuning|weights?|zero"
     r")\b",
     re.IGNORECASE,
 )
