@@ -116,6 +116,10 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
         "language-attribute-conflict",
         "optimizer-attribute-conflict",
         "availability-attribute-conflict",
+        "supervision-method-conflict",
+        "study-design-method-conflict",
+        "summarization-style-conflict",
+        "agent-setting-conflict",
     } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)

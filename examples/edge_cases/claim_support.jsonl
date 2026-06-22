@@ -44,3 +44,7 @@
 {"id":"language-attribute-conflict","claim":"The benchmark evaluates German documents.","evidence":"The benchmark evaluates English documents.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"optimizer-attribute-conflict","claim":"The model uses Adam optimization.","evidence":"The model uses SGD optimization.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"availability-attribute-conflict","claim":"The dataset is publicly available.","evidence":"The dataset is not publicly available.","expected_label":"contradicted","expected_failure_mode":"negation_conflict"}
+{"id":"supervision-method-conflict","claim":"The method uses supervised training.","evidence":"The method uses unsupervised training without labels.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"study-design-method-conflict","claim":"The study is randomized.","evidence":"The study is observational and not randomized.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"summarization-style-conflict","claim":"The system performs abstractive summarization.","evidence":"The system performs extractive summarization.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"agent-setting-conflict","claim":"The policy is trained in a multi-agent environment.","evidence":"The policy is trained in a single-agent environment.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
