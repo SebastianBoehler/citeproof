@@ -168,7 +168,7 @@ def _context_overlaps(
     evidence_tokens = _context_tokens(evidence, excluded_tokens)
     if not claim_tokens or not evidence_tokens:
         return False
-    return len(claim_tokens & evidence_tokens) / min(len(claim_tokens), len(evidence_tokens)) >= 0.5
+    return len(claim_tokens & evidence_tokens) / min(len(claim_tokens), len(evidence_tokens)) >= 0.67
 
 
 def _context_tokens(text: str, excluded_tokens: set[str] | None = None) -> set[str]:

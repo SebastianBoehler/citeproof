@@ -74,3 +74,12 @@ def test_ignores_descriptor_terms_in_different_contexts() -> None:
     )
 
     assert findings == ()
+
+
+def test_ignores_offline_online_terms_in_different_contexts() -> None:
+    findings = inspect_qualitative_conflicts(
+        "The offline dataset is public.",
+        "The online RL method uses the dataset.",
+    )
+
+    assert findings == ()
