@@ -31,6 +31,7 @@ from citeproof.statistical_lens import inspect_statistical_conflicts
 from citeproof.strength_lens import inspect_strength_conflicts, inspect_strength_tensions
 from citeproof.technical_property_lens import inspect_technical_property_conflicts
 from citeproof.text import token_overlap_ratio
+from citeproof.training_config_lens import inspect_training_config_conflicts
 
 MATERIAL_ANCHOR_RE = re.compile(
     r"\b(?:[A-Z]+[A-Za-z0-9.-]*\d+[A-Za-z0-9.-]*|[A-Z][A-Za-z]*[A-Z][A-Za-z0-9.]*|"
@@ -100,6 +101,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + list(inspect_contrast_exclusion_conflicts(claim, evidence))
         + list(inspect_clinical_conflicts(claim, evidence))
         + list(inspect_measurement_conflicts(claim, evidence))
+        + list(inspect_training_config_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)

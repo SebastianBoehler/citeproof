@@ -15,7 +15,7 @@ class PValueClaim:
 
 
 P_VALUE_RE = re.compile(
-    r"\bp(?:[- ]?value)?\s*"
+    r"(?<![-A-Za-z])\bp(?:[- ]?value)?\s*"
     r"(?:(?P<symbol><=|>=|<|>|=)|"
     r"(?P<word>less\s+than|below|under|greater\s+than|above|"
     r"at\s+least|no\s+less\s+than|at\s+most|no\s+more\s+than|"

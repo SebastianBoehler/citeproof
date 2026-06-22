@@ -149,3 +149,11 @@
 {"id":"real-synthetic-query-origin-conflict","claim":"The benchmark uses real user queries.","evidence":"The benchmark uses synthetic user queries.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"simulated-real-interaction-origin-conflict","claim":"The benchmark evaluates simulated user interactions.","evidence":"The benchmark evaluates real user interactions.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
 {"id":"synthetic-real-dialogue-origin-conflict","claim":"The corpus contains synthetic dialogues.","evidence":"The corpus contains real user dialogues.","expected_label":"contradicted","expected_failure_mode":"entity_conflict"}
+{"id":"learning-rate-config-conflict","claim":"The model was trained with a learning rate of 1e-4.","evidence":"The model was trained with a learning rate of 5e-5.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"batch-size-config-conflict","claim":"The model was trained with a batch size of 64.","evidence":"The model was trained with a batch size of 128.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"epoch-count-config-conflict","claim":"The model was trained for 3 epochs.","evidence":"The model was trained for 10 epochs.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"dropout-config-conflict","claim":"The model uses dropout 0.1.","evidence":"The model uses dropout 0.3.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"temperature-config-conflict","claim":"The decoder uses temperature 0.7.","evidence":"The decoder uses temperature 1.0.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"top-p-config-conflict","claim":"The decoder uses top-p 0.9 sampling.","evidence":"The decoder uses top-p 0.95 sampling.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"weight-decay-config-conflict","claim":"Training used weight decay 0.01.","evidence":"Training used weight decay 0.1.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}
+{"id":"beam-size-config-conflict","claim":"The decoder uses beam size 4.","evidence":"The decoder uses beam size 8.","expected_label":"contradicted","expected_failure_mode":"numeric_conflict"}

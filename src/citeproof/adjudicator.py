@@ -124,6 +124,7 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         or "exact effect value conflict" in text
         or "endpoint window conflict" in text
         or "metric value conflict" in text
+        or "training configuration value conflict" in text
     ):
         return FailureMode.NUMERIC_CONFLICT
     if "unit conflict" in text:
