@@ -42,7 +42,7 @@ claim topic:
 - subset: `1% subset`, `subset`, `small subset`, `case study`, `single site`
 - setting: `simulated`, `simulation`, `in vitro`, `ex vivo`, `in mice`
 - mismatch pairs: `humans/patients/adults` in the claim vs `mice/children/in vitro`
-  in evidence, and the reverse where appropriate
+  in evidence, plus hardware/real-world claims vs simulation-only evidence
 - mixed setting: evidence states support in one setting but not another, such as
   `in simulation but not on hardware`
 
