@@ -126,6 +126,13 @@ def test_edge_cases_with_expected_failure_modes_pass() -> None:
         "reward-density-property-conflict",
         "domain-property-conflict",
         "sensitivity-property-conflict",
+        "ci-zero-statistical-conflict",
+        "f1-averaging-statistical-conflict",
+        "summary-statistical-conflict",
+        "uncertainty-statistical-conflict",
+        "pairedness-statistical-conflict",
+        "tail-count-statistical-conflict",
+        "test-family-statistical-conflict",
     } <= {case["id"] for case in mode_cases}
     assert all(case["failure_mode_pass"] for case in mode_cases)
     assert all(case["pass"] for case in mode_cases)
