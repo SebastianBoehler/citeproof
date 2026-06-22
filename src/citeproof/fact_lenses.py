@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from citeproof.assertion_lens import inspect_assertion_status_tensions
 from citeproof.attribute_lens import inspect_attribute_conflicts
 from citeproof.comparison_lens import inspect_comparison_direction
 from citeproof.models import FactInspection, Label
@@ -16,6 +17,7 @@ from citeproof.qualitative_lens import (
     inspect_qualitative_tensions,
 )
 from citeproof.quantities import QuantityMention, numbers_to_units, quantity_mentions
+from citeproof.role_lens import inspect_role_conflicts
 from citeproof.statistical_lens import inspect_statistical_conflicts
 from citeproof.strength_lens import inspect_strength_conflicts, inspect_strength_tensions
 from citeproof.technical_property_lens import inspect_technical_property_conflicts
@@ -82,6 +84,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         + list(inspect_technical_property_conflicts(claim, evidence))
         + list(inspect_statistical_conflicts(claim, evidence))
         + list(inspect_strength_conflicts(claim, evidence))
+        + list(inspect_role_conflicts(claim, evidence))
     )
     hard_findings += (
         list(comparison_inspection.findings)
@@ -94,6 +97,7 @@ def inspect_facts(claim: str, evidence: str) -> FactInspection:
         inspect_negation_and_comparator_tensions(claim, evidence)
         + inspect_qualitative_tensions(claim, evidence)
         + inspect_strength_tensions(claim, evidence)
+        + inspect_assertion_status_tensions(claim, evidence)
     )
     if tension_findings:
         return FactInspection(Label.PARTIALLY_SUPPORTED, tension_findings)

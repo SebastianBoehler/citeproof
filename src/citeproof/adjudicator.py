@@ -130,6 +130,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         return FailureMode.NEGATION_CONFLICT
     if "entity conflict" in text:
         return FailureMode.ENTITY_CONFLICT
+    if "role conflict" in text:
+        return FailureMode.ENTITY_CONFLICT
     if "availability conflict" in text:
         return FailureMode.NEGATION_CONFLICT
     if any(conflict in text for conflict in ATTRIBUTE_ENTITY_CONFLICTS):
