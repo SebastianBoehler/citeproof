@@ -65,7 +65,7 @@ def _unit_conflicts(claim: str, evidence: str) -> list[str]:
     findings: list[str] = []
     for number, claim_units in claim_numbers.items():
         evidence_units = evidence_numbers.get(number, set())
-        if evidence_units and claim_units != evidence_units:
+        if evidence_units and not claim_units & evidence_units:
             findings.append(
                 f"Unit conflict for {number}: claim {sorted(claim_units)} vs evidence {sorted(evidence_units)}"
             )

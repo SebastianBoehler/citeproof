@@ -73,7 +73,7 @@ def adjudicate_judgments(
             "NLI did not confirm full support.",
             FailureMode.MODEL_DISAGREEMENT,
         )
-    return _with_failure_mode(heuristic, _heuristic_failure_mode(heuristic.label))
+    return _with_failure_mode(heuristic, _heuristic_failure_mode(heuristic))
 
 
 def _fact_failure_mode(facts: FactInspection) -> FailureMode:
@@ -82,6 +82,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         return FailureMode.YEAR_CONFLICT
     if "numeric conflict" in text:
         return FailureMode.NUMERIC_CONFLICT
+    if "unit conflict" in text:
+        return FailureMode.UNIT_CONFLICT
     return FailureMode.CONFLICTING_SOURCES
 
 
@@ -95,10 +97,12 @@ def _with_failure_mode(judgment: EvidenceJudgment, fallback: FailureMode) -> Evi
     return EvidenceJudgment(judgment.label, judgment.confidence, judgment.reason, fallback)
 
 
-def _heuristic_failure_mode(label: Label) -> FailureMode:
-    if label == Label.CONTRADICTED:
+def _heuristic_failure_mode(judgment: EvidenceJudgment) -> FailureMode:
+    if judgment.label == Label.CONTRADICTED:
+        if "polarity" in judgment.reason.lower():
+            return FailureMode.NEGATION_CONFLICT
         return FailureMode.CONFLICTING_SOURCES
-    if label == Label.PARTIALLY_SUPPORTED:
+    if judgment.label == Label.PARTIALLY_SUPPORTED:
         return FailureMode.SCOPE_OVERSTATEMENT
     return FailureMode.NO_RATIONALE_SPAN
 
