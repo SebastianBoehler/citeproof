@@ -30,3 +30,13 @@ def test_statistical_conflict_maps_to_entity_failure() -> None:
     )
 
     assert judgment.failure_mode == FailureMode.ENTITY_CONFLICT
+
+
+def test_p_value_conflict_maps_to_numeric_failure() -> None:
+    judgment = adjudicate_evidence(
+        "The model improvement has p < 0.05.",
+        "The model improvement has p = 0.08.",
+    )
+
+    assert judgment.label == Label.CONTRADICTED
+    assert judgment.failure_mode == FailureMode.NUMERIC_CONFLICT

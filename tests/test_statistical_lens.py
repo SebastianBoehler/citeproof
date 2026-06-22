@@ -82,6 +82,51 @@ def test_detects_spaced_test_family_conflict() -> None:
     assert any("Test family conflict" in finding for finding in findings)
 
 
+def test_detects_explicit_p_value_threshold_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The model improvement has p < 0.05.",
+        "The model improvement has p = 0.08.",
+    )
+
+    assert any("P-value conflict" in finding for finding in findings)
+
+
+def test_detects_significance_wording_p_value_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The model improvement is statistically significant.",
+        "The model improvement has p = 0.08.",
+    )
+
+    assert any("P-value conflict" in finding for finding in findings)
+
+
+def test_detects_not_significant_wording_p_value_conflict() -> None:
+    findings = inspect_statistical_conflicts(
+        "The model improvement is not statistically significant.",
+        "The model improvement has p = 0.01.",
+    )
+
+    assert any("P-value conflict" in finding for finding in findings)
+
+
+def test_ignores_matching_significant_p_value() -> None:
+    findings = inspect_statistical_conflicts(
+        "The model improvement is statistically significant.",
+        "The model improvement has p = 0.01.",
+    )
+
+    assert not any("P-value conflict" in finding for finding in findings)
+
+
+def test_ignores_matching_explicit_p_value_relation() -> None:
+    findings = inspect_statistical_conflicts(
+        "The model improvement has p < 0.05.",
+        "The model improvement has p = 0.01.",
+    )
+
+    assert not any("P-value conflict" in finding for finding in findings)
+
+
 def test_ignores_evidence_with_claim_value_plus_extra_value() -> None:
     findings = inspect_statistical_conflicts(
         "The paper reports median latency.",
