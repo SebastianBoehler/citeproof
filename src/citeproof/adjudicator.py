@@ -17,6 +17,10 @@ ATTRIBUTE_ENTITY_CONFLICTS = (
     "split conflict",
     "language conflict",
     "optimizer conflict",
+    "supervision conflict",
+    "study design conflict",
+    "summarization style conflict",
+    "agent setting conflict",
 )
 
 
