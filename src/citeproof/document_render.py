@@ -113,8 +113,7 @@ def _annotated_paragraph(
         return _multi_claim_paragraph(text, claim_indices, claim_results)
     citation_map = _citation_index_map(claim_indices, claim_results)
     rendered = _render_inline(text, citation_map, claim_results)
-    badges = _claim_badges(claim_indices, claim_results)
-    return f'<p class="doc-paragraph">{rendered} {badges}</p>'
+    return f'<p class="doc-paragraph">{rendered}</p>'
 
 
 def _multi_claim_paragraph(
@@ -129,9 +128,7 @@ def _multi_claim_paragraph(
             parts.append(_render_inline(sentence, {}, claim_results))
             continue
         citation_map = _citation_index_map(indices, claim_results)
-        rendered = _render_inline(sentence, citation_map, claim_results)
-        badges = _claim_badges(indices, claim_results)
-        parts.append(f"{rendered} {badges}")
+        parts.append(_render_inline(sentence, citation_map, claim_results))
     return f'<p class="doc-paragraph">{" ".join(part for part in parts if part.strip())}</p>'
 
 
@@ -177,15 +174,19 @@ def _render_inline(
 
     def replace_citation(match: re.Match[str]) -> str:
         parts = []
+        indices = []
         for key in [part.strip() for part in match.group(1).split(",") if part.strip()]:
             index = citation_map.get(key, _first_result_for_key(key, claim_results))
+            indices.append(index)
             token = f"@@CITE{len(placeholders)}@@"
             parts.append(token)
             placeholders[token] = (
                 f'<button class="cite inline-cite" data-index="{index}" '
                 f'title="Inspect citation {escape(key)}">{escape(key)}</button>'
             )
-        return " ".join(parts)
+        badge_token = f"@@CITE{len(placeholders)}@@"
+        placeholders[badge_token] = _claim_badges(list(dict.fromkeys(indices)), claim_results)
+        return " ".join(parts + [badge_token])
 
     rendered = CITE_COMMAND_RE.sub(replace_citation, text)
     rendered = _strip_inline_commands(rendered)
@@ -253,6 +254,7 @@ def _strip_inline_commands(text: str) -> str:
     while previous != text:
         previous = text
         text = TEXT_COMMAND_RE.sub(r"\g<value>", text)
+    text = re.sub(r"\\(?:begin|end)\{[^}]+\}", " ", text)
     text = re.sub(r"\\[a-zA-Z]+\*?(?:\[[^\]]*\])?", " ", text)
     text = re.sub(r"[{}]", " ", text)
     return re.sub(r"\s+", " ", text).strip()

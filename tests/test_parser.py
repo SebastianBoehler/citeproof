@@ -156,3 +156,21 @@ def test_parse_claims_drops_latex_preamble() -> None:
     assert claims == [
         Claim("Adaptive replay improves sample efficiency.", ("jones2023adaptive",))
     ]
+
+
+def test_parse_claims_drops_latex_environment_wrappers() -> None:
+    draft = (
+        "\\begin{abstract}\n"
+        "This abstract has no citation.\n"
+        "\\end{abstract}\n"
+        "\\begin{enumerate}\n"
+        "\\item First contribution.\n"
+        "\\end{enumerate}\n"
+        "User simulators rely on agenda-based systems \\cite{shi2019simulators}.\n"
+    )
+
+    claims = parse_claims(draft)
+
+    assert claims == [
+        Claim("User simulators rely on agenda-based systems.", ("shi2019simulators",))
+    ]

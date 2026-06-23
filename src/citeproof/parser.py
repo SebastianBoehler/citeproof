@@ -19,6 +19,7 @@ CLAUSE_PREDICATE_RE = re.compile(
     re.IGNORECASE,
 )
 LATEX_ENVIRONMENTS_TO_DROP = (
+    "abstract",
     "comment",
     "equation",
     "figure",
@@ -132,6 +133,7 @@ def _prepare_draft_text(text: str) -> str:
     text = re.sub(r"\\(?:title|author|date|bibliography|bibliographystyle)\{[^}]*\}", " ", text)
     text = re.sub(r"\\maketitle\b", " ", text)
     text = re.sub(r"\\(?:section|subsection|subsubsection|caption|label|ref)\*?\{[^}]*\}", " ", text)
+    text = re.sub(r"\\(?:begin|end)\{[^}]+\}", " ", text)
     text = re.sub(r"\\(?!cite)[A-Za-z]+\*?(?:\[[^\]]*\])?", " ", text)
     text = re.sub(r"\s+", " ", text)
     return text
