@@ -178,6 +178,25 @@ system says `supported` while the expected label is anything else.
 Use `eval-suite` for CI and private held-out benchmarks because it reports
 aggregate metrics and fails when reliability gates are violated.
 
+## Benchmark Snapshot
+
+![Benchmark comparison](assets/benchmark_method_comparison.svg)
+
+The figure compares CiteProof against lexical overlap and the optional NLI
+adapter on the current regression, challenge, and held-out real-paper layers.
+Accuracy is better when higher; false-supported and manual-review rates are
+better when lower. Generate the comparison with:
+
+```bash
+uv run --extra nli citeproof compare-benchmark examples/eval_suite.json \
+  --methods citeproof,lexical,nli \
+  --json-output reports/benchmark_comparison.json
+```
+
+The current `heldout_real_v0` split is useful for development tracking, but it
+has been inspected during implementation. Use a fresh frozen held-out split
+before making publication-style claims about final accuracy.
+
 ## Check Modes
 
 CiteProof exposes checks as separate commands rather than one loose mode flag:
