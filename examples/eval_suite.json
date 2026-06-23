@@ -9,6 +9,16 @@
       "name": "edge",
       "path": "edge_cases/claim_support.jsonl",
       "split": "adversarial"
+    },
+    {
+      "name": "real_paper",
+      "path": "real_paper/claim_support.jsonl",
+      "split": "heldout_real_paper"
+    },
+    {
+      "name": "real_paper_adversarial",
+      "path": "real_paper/adversarial_claim_support.jsonl",
+      "split": "generated_adversarial"
     }
   ],
   "gates": {

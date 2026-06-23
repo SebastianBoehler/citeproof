@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from citeproof.cli_benchmark import add_benchmark_parser
 from citeproof.entailment import judge_evidence
 from citeproof.evals.runner import run_eval_cases, run_eval_file
 from citeproof.evals.draft import run_draft_eval
@@ -283,6 +284,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     mcp = subparsers.add_parser("mcp", help="Run the CiteProof MCP server.")
     mcp.set_defaults(func=_run_mcp)
+    add_benchmark_parser(subparsers)
     return parser
 
 
