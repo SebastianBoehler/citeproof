@@ -3,24 +3,54 @@
     {
       "name": "primary",
       "path": "claim_support.jsonl",
-      "split": "curated"
+      "split": "curated_regression",
+      "layer": "regression",
+      "source_type": "synthetic",
+      "locked": false
     },
     {
       "name": "edge",
       "path": "edge_cases/claim_support.jsonl",
-      "split": "adversarial"
+      "split": "adversarial_regression",
+      "layer": "regression",
+      "source_type": "synthetic",
+      "locked": false
     },
     {
       "name": "real_paper",
       "path": "real_paper/claim_support.jsonl",
-      "split": "heldout_real_paper"
+      "split": "real_paper_regression",
+      "layer": "regression",
+      "source_type": "real_paper",
+      "locked": false
     },
     {
       "name": "real_paper_adversarial",
       "path": "real_paper/adversarial_claim_support.jsonl",
-      "split": "generated_adversarial"
+      "split": "generated_adversarial",
+      "layer": "challenge",
+      "source_type": "real_paper_mutation",
+      "locked": false
     }
   ],
+  "benchmark_layers": {
+    "regression": {
+      "purpose": "Known synthetic and real-paper cases used for CI and bug regression.",
+      "claimable": false
+    },
+    "heldout_real": {
+      "purpose": "Frozen real-paper claims sampled and labeled independently before tool runs.",
+      "claimable": true
+    },
+    "challenge": {
+      "purpose": "Generated or manually designed adversarial stress cases.",
+      "claimable": false
+    },
+    "external": {
+      "purpose": "Adapters for public benchmarks such as SciFact, SCitance, and FActScore-style datasets.",
+      "claimable": true
+    }
+  },
   "gates": {
     "max_false_supported_rate": 0.0,
     "min_accuracy": 1.0,

@@ -15,6 +15,7 @@ def test_compare_eval_suite_reports_method_metrics(tmp_path: Path) -> None:
     by_method = {entry["method"]: entry for entry in report["methods"]}
     assert by_method["citeproof"]["aggregate"]["accuracy"] == 1.0
     assert by_method["lexical"]["aggregate"]["false_supported_rate"] > 0
+    assert by_method["citeproof"]["layers"]["regression"]["summary"]["total"] == 2
     assert report["ranking"][0]["method"] == "citeproof"
 
 
@@ -73,7 +74,18 @@ def _write_suite(tmp_path: Path) -> Path:
     )
     manifest = tmp_path / "suite.json"
     manifest.write_text(
-        json.dumps({"datasets": [{"name": "tmp", "path": dataset.name}]}),
+        json.dumps(
+            {
+                "datasets": [
+                    {
+                        "name": "tmp",
+                        "path": dataset.name,
+                        "layer": "regression",
+                        "source_type": "synthetic",
+                    }
+                ]
+            }
+        ),
         encoding="utf-8",
     )
     return manifest

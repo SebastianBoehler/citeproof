@@ -54,6 +54,55 @@ def test_eval_suite_resolves_manifest_relative_paths(tmp_path: Path) -> None:
     assert all(gate["pass"] for gate in report["gates"])
 
 
+def test_eval_suite_reports_benchmark_layer_metadata(tmp_path: Path) -> None:
+    suite_dir = tmp_path / "suite"
+    suite_dir.mkdir()
+    _write_jsonl(
+        suite_dir / "cases.jsonl",
+        [
+            {
+                "id": "supported",
+                "claim": "A improves B.",
+                "evidence": "A improves B.",
+                "expected_label": "supported",
+            }
+        ],
+    )
+    manifest = suite_dir / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "datasets": [
+                    {
+                        "name": "real-regression",
+                        "path": "cases.jsonl",
+                        "split": "real_paper_regression",
+                        "layer": "regression",
+                        "source_type": "real_paper",
+                        "locked": False,
+                    }
+                ],
+                "benchmark_layers": {
+                    "regression": {
+                        "purpose": "Known cases for CI regression checks.",
+                        "claimable": False,
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = run_eval_suite(manifest)
+
+    dataset = report["datasets"][0]
+    assert dataset["layer"] == "regression"
+    assert dataset["source_type"] == "real_paper"
+    assert dataset["locked"] is False
+    assert report["layers"]["regression"]["summary"]["total"] == 1
+    assert report["layer_policy"]["regression"]["claimable"] is False
+
+
 def test_eval_suite_reports_failing_gate(tmp_path: Path) -> None:
     dataset = tmp_path / "cases.jsonl"
     _write_jsonl(

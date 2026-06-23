@@ -12,6 +12,12 @@ from pathlib import Path
 from typing import Any
 
 from citeproof.adjudicator import adjudicate_evidence
+from citeproof.benchmark_manifest import (
+    dataset_report_metadata,
+    layer_policy,
+    load_benchmark_manifest,
+    summarize_layers,
+)
 from citeproof.evals.metrics import summarize
 from citeproof.models import EvidenceJudgment, Label
 from citeproof.text import token_overlap_ratio
@@ -31,7 +37,7 @@ def compare_eval_suite(
     """Run a manifest against multiple claim-evidence classifiers."""
 
     manifest_file = Path(manifest_path)
-    manifest = _load_manifest(manifest_file)
+    manifest = load_benchmark_manifest(manifest_file)
     reports = []
     for method in methods:
         classifier = build_classifier(
@@ -44,6 +50,7 @@ def compare_eval_suite(
     return {
         "manifest": str(manifest_file),
         "methods": reports,
+        "layer_policy": layer_policy(manifest),
         "ranking": sorted(
             (
                 {
@@ -154,6 +161,7 @@ def _run_method(
     classifier: Classifier,
 ) -> dict[str, object]:
     dataset_reports = []
+    layer_results: list[dict[str, object]] = []
     all_expected: list[Label] = []
     all_predicted: list[Label] = []
     for entry in manifest["datasets"]:
@@ -163,12 +171,21 @@ def _run_method(
         predicted = [Label(row["predicted_label"]) for row in rows]
         all_expected.extend(expected)
         all_predicted.extend(predicted)
+        layer_results.append(
+            {
+                "name": str(entry["name"]),
+                "layer": str(entry["layer"]),
+                "expected": expected,
+                "predicted": predicted,
+            }
+        )
         summary = summarize(expected, predicted)
         dataset_reports.append(
             {
                 "name": str(entry["name"]),
                 "path": str(dataset_path),
                 "split": str(entry.get("split", "unspecified")),
+                **dataset_report_metadata(entry),
                 "summary": summary.to_dict(),
                 "failures": [row for row in rows if not row["pass"]],
             }
@@ -176,6 +193,7 @@ def _run_method(
     return {
         "method": method,
         "datasets": dataset_reports,
+        "layers": summarize_layers(layer_results),
         "aggregate": summarize(all_expected, all_predicted).to_dict(),
     }
 
@@ -199,14 +217,6 @@ def _run_dataset(path: Path, classifier: Classifier) -> list[dict[str, object]]:
             }
         )
     return rows
-
-
-def _load_manifest(path: Path) -> dict[str, object]:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    datasets = data.get("datasets")
-    if not isinstance(datasets, list) or not datasets:
-        raise ValueError("Benchmark comparison manifest must contain datasets.")
-    return data
 
 
 def _resolve_dataset_path(manifest_path: Path, raw_path: object) -> Path:

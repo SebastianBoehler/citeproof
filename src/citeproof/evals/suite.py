@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Callable
 
+from citeproof.benchmark_manifest import (
+    dataset_report_metadata,
+    layer_policy,
+    load_benchmark_manifest,
+    summarize_layers,
+)
 from citeproof.entailment import judge_evidence
 from citeproof.evals.metrics import EvalSummary, summarize
 from citeproof.evals.runner import Judge, run_eval_cases
@@ -21,8 +26,9 @@ def run_eval_suite(
     """Run all direct claim-support datasets declared in a suite manifest."""
 
     manifest_file = Path(manifest_path)
-    manifest = _load_manifest(manifest_file)
+    manifest = load_benchmark_manifest(manifest_file)
     reports: list[dict[str, object]] = []
+    layer_results: list[dict[str, object]] = []
     all_expected: list[Label] = []
     all_predicted: list[Label] = []
     for entry in manifest["datasets"]:
@@ -32,12 +38,21 @@ def run_eval_suite(
         predicted = [Label(case["predicted_label"]) for case in cases]
         all_expected.extend(expected)
         all_predicted.extend(predicted)
+        layer_results.append(
+            {
+                "name": str(entry["name"]),
+                "layer": str(entry["layer"]),
+                "expected": expected,
+                "predicted": predicted,
+            }
+        )
         summary = summarize(expected, predicted)
         reports.append(
             {
                 "name": str(entry["name"]),
                 "path": str(dataset_path),
                 "split": str(entry.get("split", "unspecified")),
+                **dataset_report_metadata(entry),
                 "summary": summary.to_dict(),
                 "failures": [case for case in cases if not case["pass"]],
             }
@@ -47,6 +62,8 @@ def run_eval_suite(
     return {
         "manifest": str(manifest_file),
         "datasets": reports,
+        "layers": summarize_layers(layer_results),
+        "layer_policy": layer_policy(manifest),
         "aggregate": aggregate.to_dict(),
         "gates": gate_results,
         "passed": all(result["pass"] for result in gate_results),
@@ -57,22 +74,6 @@ def suite_passed(report: dict[str, object]) -> bool:
     """Return whether every gate in an eval-suite report passed."""
 
     return bool(report.get("passed", False))
-
-
-def _load_manifest(path: Path) -> dict[str, object]:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    datasets = data.get("datasets")
-    if not isinstance(datasets, list) or not datasets:
-        raise ValueError("Eval-suite manifest must contain a non-empty datasets list.")
-    for index, entry in enumerate(datasets, start=1):
-        if not isinstance(entry, dict):
-            raise ValueError(f"Dataset entry {index} must be an object.")
-        if "name" not in entry or "path" not in entry:
-            raise ValueError(f"Dataset entry {index} must contain name and path.")
-    gates = data.get("gates", {})
-    if not isinstance(gates, dict):
-        raise ValueError("Eval-suite gates must be an object when provided.")
-    return data
 
 
 def _resolve_dataset_path(manifest_path: Path, raw_path: object) -> Path:
