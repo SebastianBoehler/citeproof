@@ -17,6 +17,8 @@ def test_compare_eval_suite_reports_method_metrics(tmp_path: Path) -> None:
     assert by_method["lexical"]["aggregate"]["false_supported_rate"] > 0
     assert by_method["citeproof"]["layers"]["regression"]["summary"]["total"] == 2
     assert report["ranking"][0]["method"] == "citeproof"
+    assert report["layer_ranking"]["regression"][0]["method"] == "citeproof"
+    assert report["layer_ranking"]["regression"][0]["accuracy"] == 1.0
 
 
 def test_compare_benchmark_cli_writes_json(tmp_path: Path) -> None:

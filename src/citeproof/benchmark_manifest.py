@@ -25,10 +25,22 @@ def load_benchmark_manifest(path: str | Path) -> dict[str, object]:
     gates = data.get("gates", {})
     if not isinstance(gates, dict):
         raise ValueError("Benchmark manifest gates must be an object when provided.")
+    layer_gates = data.get("layer_gates", {})
+    if not isinstance(layer_gates, dict):
+        raise ValueError("Benchmark manifest layer_gates must be an object when provided.")
+    for layer, gates_for_layer in layer_gates.items():
+        if not isinstance(gates_for_layer, dict):
+            raise ValueError(f"Benchmark manifest layer_gates.{layer} must be an object.")
     layers = data.get("benchmark_layers", {})
     if not isinstance(layers, dict):
         raise ValueError("Benchmark manifest benchmark_layers must be an object when provided.")
-    return {**data, "datasets": normalized, "gates": gates, "benchmark_layers": layers}
+    return {
+        **data,
+        "datasets": normalized,
+        "gates": gates,
+        "layer_gates": layer_gates,
+        "benchmark_layers": layers,
+    }
 
 
 def dataset_report_metadata(entry: dict[str, object]) -> dict[str, object]:

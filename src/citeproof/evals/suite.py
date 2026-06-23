@@ -12,11 +12,11 @@ from citeproof.benchmark_manifest import (
     summarize_layers,
 )
 from citeproof.entailment import judge_evidence
-from citeproof.evals.metrics import EvalSummary, summarize
+from citeproof.evals.metrics import summarize
 from citeproof.evals.runner import Judge, run_eval_cases
 from citeproof.models import Label
 
-GateCheck = Callable[[EvalSummary, float], tuple[float, bool]]
+GateCheck = Callable[[dict[str, object], float], tuple[float, bool]]
 
 
 def run_eval_suite(
@@ -58,15 +58,18 @@ def run_eval_suite(
             }
         )
     aggregate = summarize(all_expected, all_predicted)
-    gate_results = _evaluate_gates(aggregate, manifest.get("gates", {}))
+    layers = summarize_layers(layer_results)
+    gate_results = _evaluate_gates(aggregate.to_dict(), manifest.get("gates", {}))
+    layer_gate_results = _evaluate_layer_gates(layers, manifest.get("layer_gates", {}))
     return {
         "manifest": str(manifest_file),
         "datasets": reports,
-        "layers": summarize_layers(layer_results),
+        "layers": layers,
         "layer_policy": layer_policy(manifest),
         "aggregate": aggregate.to_dict(),
         "gates": gate_results,
-        "passed": all(result["pass"] for result in gate_results),
+        "layer_gates": layer_gate_results,
+        "passed": _all_gates_pass(gate_results, layer_gate_results),
     }
 
 
@@ -83,7 +86,7 @@ def _resolve_dataset_path(manifest_path: Path, raw_path: object) -> Path:
     return manifest_path.parent / dataset_path
 
 
-def _evaluate_gates(summary: EvalSummary, gates: dict[str, object]) -> list[dict[str, object]]:
+def _evaluate_gates(summary: dict[str, object], gates: dict[str, object]) -> list[dict[str, object]]:
     results: list[dict[str, object]] = []
     checks = _gate_checks()
     for name, raw_threshold in gates.items():
@@ -102,27 +105,63 @@ def _evaluate_gates(summary: EvalSummary, gates: dict[str, object]) -> list[dict
     return results
 
 
+def _evaluate_layer_gates(
+    layers: dict[str, object],
+    layer_gates: dict[str, object],
+) -> dict[str, list[dict[str, object]]]:
+    results = {}
+    for layer, gates in layer_gates.items():
+        if layer not in layers:
+            raise ValueError(f"layer_gates references unknown benchmark layer: {layer}")
+        if not isinstance(gates, dict):
+            raise ValueError(f"Layer gates for {layer} must be an object.")
+        layer_report = layers[str(layer)]
+        if not isinstance(layer_report, dict) or not isinstance(layer_report.get("summary"), dict):
+            raise ValueError(f"Benchmark layer {layer} has no summary metrics.")
+        results[str(layer)] = _evaluate_gates(layer_report["summary"], gates)
+    return results
+
+
+def _all_gates_pass(
+    gates: list[dict[str, object]],
+    layer_gates: dict[str, list[dict[str, object]]],
+) -> bool:
+    return all(result["pass"] for result in gates) and all(
+        result["pass"] for results in layer_gates.values() for result in results
+    )
+
+
 def _gate_checks() -> dict[str, GateCheck]:
     return {
         "max_false_supported_rate": lambda summary, threshold: (
-            summary.false_supported_rate,
-            summary.false_supported_rate <= threshold,
+            _metric(summary, "false_supported_rate"),
+            _metric(summary, "false_supported_rate") <= threshold,
         ),
-        "min_accuracy": lambda summary, threshold: (summary.accuracy, summary.accuracy >= threshold),
+        "min_accuracy": lambda summary, threshold: (
+            _metric(summary, "accuracy"),
+            _metric(summary, "accuracy") >= threshold,
+        ),
         "max_manual_review_rate": lambda summary, threshold: (
-            summary.manual_review_rate,
-            summary.manual_review_rate <= threshold,
+            _metric(summary, "manual_review_rate"),
+            _metric(summary, "manual_review_rate") <= threshold,
         ),
         "min_supported_precision": lambda summary, threshold: (
-            summary.supported_precision,
-            summary.supported_precision >= threshold,
+            _metric(summary, "supported_precision"),
+            _metric(summary, "supported_precision") >= threshold,
         ),
         "min_contradiction_recall": lambda summary, threshold: (
-            summary.contradiction_recall,
-            summary.contradiction_recall >= threshold,
+            _metric(summary, "contradiction_recall"),
+            _metric(summary, "contradiction_recall") >= threshold,
         ),
         "min_unsupported_recall": lambda summary, threshold: (
-            summary.unsupported_recall,
-            summary.unsupported_recall >= threshold,
+            _metric(summary, "unsupported_recall"),
+            _metric(summary, "unsupported_recall") >= threshold,
         ),
     }
+
+
+def _metric(summary: dict[str, object], name: str) -> float:
+    value = summary.get(name)
+    if not isinstance(value, int | float):
+        raise ValueError(f"Eval summary is missing numeric metric: {name}")
+    return float(value)

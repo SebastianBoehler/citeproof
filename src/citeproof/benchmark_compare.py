@@ -7,7 +7,7 @@ import os
 import re
 import urllib.error
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
@@ -51,18 +51,10 @@ def compare_eval_suite(
         "manifest": str(manifest_file),
         "methods": reports,
         "layer_policy": layer_policy(manifest),
-        "ranking": sorted(
-            (
-                {
-                    "method": report["method"],
-                    "accuracy": report["aggregate"]["accuracy"],
-                    "false_supported_rate": report["aggregate"]["false_supported_rate"],
-                    "manual_review_rate": report["aggregate"]["manual_review_rate"],
-                }
-                for report in reports
-            ),
-            key=lambda row: (-row["accuracy"], row["false_supported_rate"]),
+        "ranking": _rank_summaries(
+            _ranking_row(str(report["method"]), report["aggregate"]) for report in reports
         ),
+        "layer_ranking": _rank_layers(reports),
     }
 
 
@@ -217,6 +209,47 @@ def _run_dataset(path: Path, classifier: Classifier) -> list[dict[str, object]]:
             }
         )
     return rows
+
+
+def _rank_layers(reports: list[dict[str, object]]) -> dict[str, list[dict[str, object]]]:
+    layers = sorted(
+        {
+            layer
+            for report in reports
+            for layer in _layers_for_report(report).keys()
+        }
+    )
+    return {
+        layer: _rank_summaries(
+            _ranking_row(str(report["method"]), _layers_for_report(report)[layer]["summary"])
+            for report in reports
+            if layer in _layers_for_report(report)
+        )
+        for layer in layers
+    }
+
+
+def _layers_for_report(report: dict[str, object]) -> dict[str, dict[str, object]]:
+    layers = report.get("layers", {})
+    return layers if isinstance(layers, dict) else {}
+
+
+def _ranking_row(method: str, summary: object) -> dict[str, object]:
+    if not isinstance(summary, dict):
+        raise ValueError(f"Benchmark method {method} has no summary metrics.")
+    return {
+        "method": method,
+        "accuracy": summary["accuracy"],
+        "false_supported_rate": summary["false_supported_rate"],
+        "manual_review_rate": summary["manual_review_rate"],
+    }
+
+
+def _rank_summaries(rows: Iterable[dict[str, object]]) -> list[dict[str, object]]:
+    return sorted(
+        rows,
+        key=lambda row: (-float(row["accuracy"]), float(row["false_supported_rate"])),
+    )
 
 
 def _resolve_dataset_path(manifest_path: Path, raw_path: object) -> Path:

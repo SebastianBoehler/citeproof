@@ -31,6 +31,14 @@
       "layer": "challenge",
       "source_type": "real_paper_mutation",
       "locked": false
+    },
+    {
+      "name": "heldout_real_v0",
+      "path": "heldout_real/claim_support.jsonl",
+      "split": "heldout_real_v0",
+      "layer": "heldout_real",
+      "source_type": "real_paper",
+      "locked": true
     }
   ],
   "benchmark_layers": {
@@ -51,12 +59,21 @@
       "claimable": true
     }
   },
-  "gates": {
-    "max_false_supported_rate": 0.0,
-    "min_accuracy": 1.0,
-    "max_manual_review_rate": 0.35,
-    "min_supported_precision": 1.0,
-    "min_contradiction_recall": 1.0,
-    "min_unsupported_recall": 1.0
+  "layer_gates": {
+    "regression": {
+      "max_false_supported_rate": 0.0,
+      "min_accuracy": 1.0,
+      "max_manual_review_rate": 0.35,
+      "min_supported_precision": 1.0,
+      "min_contradiction_recall": 1.0,
+      "min_unsupported_recall": 1.0
+    },
+    "challenge": {
+      "max_false_supported_rate": 0.0,
+      "min_accuracy": 1.0,
+      "max_manual_review_rate": 0.35,
+      "min_contradiction_recall": 1.0,
+      "min_unsupported_recall": 1.0
+    }
   }
 }
