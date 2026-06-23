@@ -127,6 +127,35 @@ def test_parse_claims_does_not_split_coordinated_citation_list() -> None:
     ]
 
 
+def test_parse_claims_scopes_mid_sentence_method_citation() -> None:
+    claims = parse_claims(
+        "In this paper, we investigate QLoRA fine-tuning~\\cite{dettmers2023qlora} "
+        "of four open-source instruction-tuned LLMs (1.2B--7B parameters) "
+        "for next user turn prediction."
+    )
+
+    assert claims == [
+        Claim(
+            "In this paper, we investigate QLoRA fine-tuning.",
+            ("dettmers2023qlora",),
+        )
+    ]
+
+
+def test_parse_claims_keeps_author_citation_scope() -> None:
+    claims = parse_claims(
+        "Naous et al.~\\cite{naous2025flipping} recently demonstrated that "
+        "assistant-trained LLMs make poor user simulators."
+    )
+
+    assert claims == [
+        Claim(
+            "Naous et al. recently demonstrated that assistant-trained LLMs make poor user simulators.",
+            ("naous2025flipping",),
+        )
+    ]
+
+
 def test_parse_claims_drops_latex_tables_and_comments() -> None:
     draft = (
         "\\begin{comment} Hidden claim \\cite{hidden2024}. \\end{comment}\n"

@@ -12,6 +12,11 @@ BRACKET_CITE_RE = re.compile(r"\[([^\]]*@[\w:.-]+[^\]]*)\]")
 AT_CITE_RE = re.compile(r"@([\w:.-]+)")
 COMMA_CLAUSE_MARKER_RE = re.compile(r",\s+(?:while|whereas|but|and)\s+")
 SEMICOLON_CLAUSE_BOUNDARY_RE = re.compile(r";\s+")
+SELF_METHOD_CITATION_RE = re.compile(
+    r"\bwe\s+(?:adopt|apply|employ|evaluate|investigate|leverage|study|use)\b",
+    re.IGNORECASE,
+)
+METHOD_SCOPE_SUFFIX_RE = re.compile(r"^[,;:]?\s*(?:across|for|in|of|on|to|under|with)\b", re.IGNORECASE)
 CLAUSE_PREDICATE_RE = re.compile(
     r"\b(?:achieves?|are|captures?|computes?|contains?|covers?|defines?|has|have|"
     r"improves?|increases?|is|outperforms?|provides?|reduces?|requires?|shows?|"
@@ -63,6 +68,7 @@ def clean_claim_text(text: str) -> str:
 
     cleaned = CITE_COMMAND_RE.sub("", text)
     cleaned = BRACKET_CITE_RE.sub("", cleaned)
+    cleaned = cleaned.replace("~", " ")
     cleaned = re.sub(r"[{}]", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     cleaned = re.sub(r"\s+([.!?,;:])", r"\1", cleaned)
@@ -72,6 +78,9 @@ def clean_claim_text(text: str) -> str:
 def split_citation_clauses(sentence: str) -> list[str]:
     """Split one sentence into citation-local clauses when the boundary is explicit."""
 
+    scoped_piece = _scoped_mid_sentence_method_citation(sentence)
+    if scoped_piece:
+        return [scoped_piece]
     pieces = _split_explicit_citation_clauses(sentence)
     cited_pieces = [piece for piece in pieces if extract_citation_keys(piece)]
     if (
@@ -85,6 +94,20 @@ def split_citation_clauses(sentence: str) -> list[str]:
 
 def _split_latex_keys(raw: str) -> list[str]:
     return [part.strip() for part in raw.split(",")]
+
+
+def _scoped_mid_sentence_method_citation(sentence: str) -> str | None:
+    matches = list(CITE_COMMAND_RE.finditer(sentence))
+    if len(matches) != 1:
+        return None
+    match = matches[0]
+    prefix = sentence[: match.end()].strip()
+    suffix = sentence[match.end() :].strip()
+    if not suffix or not METHOD_SCOPE_SUFFIX_RE.match(suffix):
+        return None
+    if not SELF_METHOD_CITATION_RE.search(clean_claim_text(prefix)):
+        return None
+    return _ensure_terminal_punctuation(prefix, sentence)
 
 
 def _split_explicit_citation_clauses(sentence: str) -> list[str]:

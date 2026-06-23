@@ -257,4 +257,5 @@ def _strip_inline_commands(text: str) -> str:
     text = re.sub(r"\\(?:begin|end)\{[^}]+\}", " ", text)
     text = re.sub(r"\\[a-zA-Z]+\*?(?:\[[^\]]*\])?", " ", text)
     text = re.sub(r"[{}]", " ", text)
+    text = text.replace("~", " ")
     return re.sub(r"\s+", " ", text).strip()
