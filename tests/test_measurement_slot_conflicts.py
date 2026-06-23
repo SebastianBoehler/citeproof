@@ -47,6 +47,15 @@ def test_benchmark_version_conflict_is_entity_conflict() -> None:
     assert judgment.failure_mode == FailureMode.ENTITY_CONFLICT
 
 
+def test_adjectival_generated_marker_is_not_benchmark_version() -> None:
+    result = inspect_facts(
+        "Distilling step-by-step uses LLM-generated rationales as additional supervision.",
+        "The method extracts LLM rationales as additional supervision for training small models.",
+    )
+
+    assert result.label is None
+
+
 def test_matching_measurement_slots_remain_clean() -> None:
     result = inspect_facts(
         "The model achieved an AUROC of 0.91 on the test set.",

@@ -183,6 +183,8 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
         return FailureMode.ENTITY_CONFLICT
     if "benchmark version conflict" in text:
         return FailureMode.ENTITY_CONFLICT
+    if "mapping conflict" in text:
+        return FailureMode.ENTITY_CONFLICT
     return FailureMode.CONFLICTING_SOURCES
 
 
@@ -223,6 +225,13 @@ def combine_atom_judgments(judgments: list[EvidenceJudgment]) -> EvidenceJudgmen
         )
     labels = [judgment.label for judgment in judgments]
     if Label.CONTRADICTED in labels:
+        if any(label in {Label.SUPPORTED, Label.PARTIALLY_SUPPORTED} for label in labels):
+            return EvidenceJudgment(
+                Label.PARTIALLY_SUPPORTED,
+                0.66,
+                "Some atomic subclaims are supported, but at least one is contradicted.",
+                FailureMode.MISSING_ATOM_SUPPORT,
+            )
         strongest = max(
             (judgment for judgment in judgments if judgment.label == Label.CONTRADICTED),
             key=lambda judgment: judgment.confidence,

@@ -19,6 +19,22 @@ def test_atomize_preserves_original_context() -> None:
     assert all(atom.citation_keys == ("wildchat",) for atom in group.atoms)
 
 
+def test_atomize_multiword_subject_conjunction() -> None:
+    claim = Claim(
+        "POMDP-based spoken dialog systems provide robustness to recognition errors "
+        "and solve exact policy learning tractably for real-world dialogs.",
+        ("pomdp",),
+    )
+
+    group = atomize_claim(claim)
+
+    assert [atom.text for atom in group.atoms] == [
+        "POMDP-based spoken dialog systems provide robustness to recognition errors.",
+        "POMDP-based spoken dialog systems solve exact policy learning tractably for real-world dialogs.",
+    ]
+    assert all(atom.context == claim.text for atom in group.atoms)
+
+
 def test_atomize_does_not_split_unrelated_short_sentence() -> None:
     claim = Claim(
         "BERTScore computes contextual embedding similarity.",

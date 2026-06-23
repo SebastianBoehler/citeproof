@@ -36,3 +36,28 @@ def test_component_exclusion_blocks_support() -> None:
 
     assert judgment.label == Label.CONTRADICTED
     assert judgment.failure_mode == FailureMode.NEGATION_CONFLICT
+
+
+def test_claim_excluding_component_blocks_full_support() -> None:
+    judgment = adjudicate_evidence(
+        "The retrieval system combines lexical search with constrained LLM re-ranking "
+        "but excludes vector similarity.",
+        "The retrieval system combines lexical retrieval, embedding-based vector "
+        "similarity, and constrained LLM re-ranking.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+    assert judgment.failure_mode == FailureMode.SCOPE_OVERSTATEMENT
+
+
+def test_claim_excluding_component_from_pipeline_blocks_full_support() -> None:
+    judgment = adjudicate_evidence(
+        "The rationale-augmented retrieval system combines lexical search with constrained "
+        "LLM re-ranking but excludes vector similarity from the pipeline.",
+        "We propose a hybrid semantic search system that combines typo-tolerant lexical "
+        "retrieval, embedding-based vector similarity, and constrained large language "
+        "model re-ranking.",
+    )
+
+    assert judgment.label == Label.PARTIALLY_SUPPORTED
+    assert judgment.failure_mode == FailureMode.SCOPE_OVERSTATEMENT

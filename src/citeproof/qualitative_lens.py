@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from citeproof.text import tokenize
+from citeproof.text import academic_token_overlap_ratio, tokenize
 
 ONLY_RE = re.compile(r"\bonly\b", re.IGNORECASE)
 MULTI_RE = re.compile(r"\b(one\s+of|among|several|multiple|both)\b", re.IGNORECASE)
@@ -26,6 +26,25 @@ SOTA_CLAIM_RE = re.compile(
 SOTA_NEGATION_RE = re.compile(
     r"\b(?:does\s+not|did\s+not|not)\s+"
     r"(?:achieve|reach)\s+state[- ]of[- ]the[- ]art\b",
+    re.IGNORECASE,
+)
+GOOD_INDICATOR_CLAIM_RE = re.compile(r"\bgood\s+indicator\b", re.IGNORECASE)
+GOOD_INDICATOR_NEGATION_RE = re.compile(
+    r"\b(?:can\s+not|cannot|does\s+not|is\s+not|not)\s+"
+    r"(?:be\s+)?(?:a\s+)?good\s+indicator\b",
+    re.IGNORECASE,
+)
+TRACTABILITY_CLAIM_RE = re.compile(r"\b(?:tractable|tractably)\b", re.IGNORECASE)
+INTRACTABILITY_EVIDENCE_RE = re.compile(
+    r"\bintractable\b|"
+    r"\b(?:must|need(?:s)?)\s+(?:be\s+)?used?\b.{0,60}\bapproximation\b|"
+    r"\bapproximation\b.{0,60}\b(?:must|need(?:s)?)\s+(?:be\s+)?used?\b",
+    re.IGNORECASE,
+)
+SUFFICIENCY_CLAIM_RE = re.compile(r"\b(?:sufficient|guaranteed)\b", re.IGNORECASE)
+SUFFICIENCY_NEGATION_RE = re.compile(
+    r"\b(?:does\s+not|did\s+not|doesn't|didn't)\s+work\b|"
+    r"\bnot\s+(?:guaranteed|sufficient)\b",
     re.IGNORECASE,
 )
 REQUIRES_NO_RE = re.compile(
@@ -62,6 +81,9 @@ def inspect_qualitative_conflicts(claim: str, evidence: str) -> tuple[str, ...]:
     findings.extend(_exclusivity_conflicts(claim, evidence))
     findings.extend(_significance_conflicts(claim, evidence))
     findings.extend(_sota_conflicts(claim, evidence))
+    findings.extend(_indicator_conflicts(claim, evidence))
+    findings.extend(_tractability_conflicts(claim, evidence))
+    findings.extend(_sufficiency_conflicts(claim, evidence))
     findings.extend(_requirement_conflicts(claim, evidence))
     findings.extend(_descriptor_conflicts(claim, evidence))
     return tuple(findings)
@@ -106,6 +128,37 @@ def _sota_conflicts(claim: str, evidence: str) -> list[str]:
         and _context_overlaps(claim, evidence)
     ):
         return ["State-of-the-art conflict: evidence negates the claim."]
+    return []
+
+
+def _indicator_conflicts(claim: str, evidence: str) -> list[str]:
+    if (
+        GOOD_INDICATOR_CLAIM_RE.search(claim)
+        and not GOOD_INDICATOR_NEGATION_RE.search(claim)
+        and GOOD_INDICATOR_NEGATION_RE.search(evidence)
+        and academic_token_overlap_ratio(claim, evidence) >= 0.5
+    ):
+        return ["Negation conflict: evidence says the measure is not a good indicator."]
+    return []
+
+
+def _tractability_conflicts(claim: str, evidence: str) -> list[str]:
+    if (
+        TRACTABILITY_CLAIM_RE.search(claim)
+        and INTRACTABILITY_EVIDENCE_RE.search(evidence)
+        and academic_token_overlap_ratio(claim, evidence) >= 0.45
+    ):
+        return ["Negation conflict: evidence says the claimed tractable problem is intractable."]
+    return []
+
+
+def _sufficiency_conflicts(claim: str, evidence: str) -> list[str]:
+    if (
+        SUFFICIENCY_CLAIM_RE.search(claim)
+        and SUFFICIENCY_NEGATION_RE.search(evidence)
+        and academic_token_overlap_ratio(claim, evidence) >= 0.4
+    ):
+        return ["Negation conflict: evidence negates the claimed sufficiency or guarantee."]
     return []
 
 

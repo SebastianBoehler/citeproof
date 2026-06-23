@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from citeproof.text import tokenize
+from citeproof.text import academic_tokens, tokenize
 
 RESULT_RE = re.compile(
     r"\b(generali[sz]es?|improves?|improved|reduces?|reduced|increases?|increased|outperforms?)\b",
@@ -40,6 +40,11 @@ COMPONENT_RESULT_RE = re.compile(
     r"(?:improves?|improved|reduces?|reduced|increases?|increased|outperforms?)\b",
     re.IGNORECASE,
 )
+CLAIM_EXCLUDES_COMPONENT_RE = re.compile(
+    r"\b(?:excludes?|without|no)\s+(?P<component>[A-Za-z0-9][A-Za-z0-9 -]{2,60})",
+    re.IGNORECASE,
+)
+INCLUSION_RE = re.compile(r"\b(combines?|includes?|uses?|with)\b", re.IGNORECASE)
 EXCLUSION_TEMPLATE = (
     r"\bno[- ]{component}\b|"
     r"\bwithout\s+{component}\b|"
@@ -58,9 +63,9 @@ TRIGGER_RE = re.compile(
 def inspect_context_tensions(claim: str, evidence: str) -> tuple[str, ...]:
     """Return partial-support findings for evidence narrower than the claim."""
 
+    findings = list(_claim_exclusion_tensions(claim, evidence))
     if not RESULT_RE.search(claim) or not RESULT_RE.search(evidence):
-        return ()
-    findings: list[str] = []
+        return tuple(findings)
     if _evidence_is_limited_beyond_claim(claim, evidence):
         findings.append("Context limitation: evidence supports a narrower setting than the claim.")
     if _setting_mismatch(claim, evidence):
@@ -123,6 +128,34 @@ def _claim_excludes_component(text: str, component: str) -> bool:
     return _component_excluded(component, text)
 
 
+def _claim_exclusion_tensions(claim: str, evidence: str) -> tuple[str, ...]:
+    if not INCLUSION_RE.search(evidence):
+        return ()
+    findings: list[str] = []
+    for component in _excluded_components(claim):
+        component_tokens = set(tokenize(component))
+        if not component_tokens:
+            continue
+        evidence_tokens = set(tokenize(evidence))
+        if len(component_tokens & evidence_tokens) / len(component_tokens) < 0.67:
+            continue
+        if _context_overlaps(claim, evidence, component_tokens):
+            findings.append("Component inclusion tension: evidence includes a component excluded by the claim.")
+    return tuple(dict.fromkeys(findings))
+
+
+def _excluded_components(text: str) -> tuple[str, ...]:
+    components = []
+    for match in CLAIM_EXCLUDES_COMPONENT_RE.finditer(text):
+        component = re.split(
+            r"\b(?:and|but|for|from|in|of|to|while|whereas|with)\b",
+            match.group("component"),
+            maxsplit=1,
+        )[0]
+        components.append(component.strip(" .,:;()[]{}"))
+    return tuple(component for component in components if component)
+
+
 def _component_excluded(component: str, text: str) -> bool:
     pattern = re.compile(EXCLUSION_TEMPLATE.format(component=re.escape(component)), re.IGNORECASE)
     return bool(pattern.search(text))
@@ -133,11 +166,11 @@ def _context_overlaps(claim: str, evidence: str, excluded_tokens: set[str] | Non
     evidence_tokens = _content_tokens(evidence, excluded_tokens)
     if not claim_tokens or not evidence_tokens:
         return False
-    return len(claim_tokens & evidence_tokens) / min(len(claim_tokens), len(evidence_tokens)) >= 0.67
+    return len(claim_tokens & evidence_tokens) / min(len(claim_tokens), len(evidence_tokens)) >= 2 / 3
 
 
 def _content_tokens(text: str, excluded_tokens: set[str] | None = None) -> set[str]:
-    tokens = set(tokenize(TRIGGER_RE.sub(" ", text)))
+    tokens = set(academic_tokens(TRIGGER_RE.sub(" ", text)))
     if excluded_tokens:
         tokens -= excluded_tokens
     return tokens

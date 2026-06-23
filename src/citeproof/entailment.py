@@ -10,7 +10,7 @@ from citeproof.metric_support import has_metric_definition_support
 from citeproof.models import EvidenceJudgment, Label
 from citeproof.quantities import quantity_mentions
 from citeproof.survey_support import has_survey_claim_support
-from citeproof.text import token_overlap_ratio
+from citeproof.text import academic_token_overlap_ratio, token_overlap_ratio
 
 POSITIVE_CLAIM_RE = re.compile(
     r"\b(outperform|outperforms|improve|improves|improved|increase|increases|reduce|reduces|reduced|"
@@ -130,18 +130,19 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
             "Evidence supports a narrower claim than the draft states.",
         )
 
+    resource_claim = _claims_resource_reduction(claim)
+    if overlap >= 0.68 and not resource_claim:
+        return EvidenceJudgment(Label.SUPPORTED, min(0.95, 0.55 + overlap / 2), "Strong lexical support.")
+
     if semantic_support:
         return EvidenceJudgment(Label.SUPPORTED, 0.74, "Anchored paraphrase support.")
 
-    if overlap >= 0.38 and _claims_resource_reduction(claim):
+    if overlap >= 0.38 and resource_claim:
         return EvidenceJudgment(
             Label.PARTIALLY_SUPPORTED,
             min(0.78, 0.42 + overlap / 2),
             "Evidence mentions the resource dimension but not the claimed reduction.",
         )
-
-    if overlap >= 0.68:
-        return EvidenceJudgment(Label.SUPPORTED, min(0.95, 0.55 + overlap / 2), "Strong lexical support.")
 
     if overlap >= 0.38:
         return EvidenceJudgment(
@@ -214,11 +215,18 @@ def _has_semantic_support(claim: str, evidence: str, overlap: float) -> bool:
     evidence_lower = evidence.lower()
     if _has_resource_reduction_support(claim, evidence, overlap):
         return True
+    if _claims_resource_reduction(claim):
+        return False
     if has_causal_design_support(claim, evidence, overlap):
         return True
     if has_metric_definition_support(claim, evidence):
         return True
     if has_survey_claim_support(claim, evidence):
+        return True
+    academic_overlap = academic_token_overlap_ratio(claim, evidence)
+    if overlap >= 0.4 and academic_overlap >= 0.68:
+        return True
+    if overlap >= 0.3 and academic_overlap >= 0.75:
         return True
     return bool(
         "languages" in claim_lower
@@ -287,10 +295,6 @@ def _has_nearby_match(
     *,
     max_gap: int = 60,
 ) -> bool:
-    left_matches = tuple(left_pattern.finditer(text))
-    right_matches = tuple(right_pattern.finditer(text))
-    return any(
-        abs(left.start() - right.start()) <= max_gap
-        for left in left_matches
-        for right in right_matches
-    )
+    lefts = tuple(left_pattern.finditer(text))
+    rights = tuple(right_pattern.finditer(text))
+    return any(abs(left.start() - right.start()) <= max_gap for left in lefts for right in rights)

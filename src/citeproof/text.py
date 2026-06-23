@@ -36,6 +36,43 @@ STOPWORDS = {
     "were",
     "with",
 }
+ACADEMIC_TOKEN_ALIASES = {
+    "assistance": ("assist",),
+    "assisted": ("assist",),
+    "assistants": ("assistant",),
+    "better": ("stronger",),
+    "fed": ("feed",),
+    "feeds": ("feed",),
+    "generate": ("generate",),
+    "generated": ("generate",),
+    "generator": ("generate",),
+    "llm": ("language", "model"),
+    "llms": ("language", "model"),
+    "lm": ("language", "model"),
+    "lms": ("language", "model"),
+    "make": ("produce",),
+    "modeling": ("model",),
+    "models": ("model",),
+    "pomdps": ("pomdp",),
+    "ppl": ("perplexity",),
+    "provides": ("provide",),
+    "reranking": ("rerank",),
+    "reranks": ("rerank",),
+    "retrieval": ("retrieve",),
+    "retrieved": ("retrieve",),
+    "robustness": ("robust",),
+    "simulators": ("simulator",),
+    "smaller": ("small",),
+    "speech": ("spoken",),
+    "training": ("train",),
+}
+ACADEMIC_DISCOURSE_TOKENS = {
+    "argue",
+    "argues",
+    "conclude",
+    "concludes",
+    "paper",
+}
 
 
 def tokenize(text: str) -> list[str]:
@@ -101,3 +138,24 @@ def token_overlap_ratio(left: str, right: str) -> float:
         return 0.0
     right_tokens = set(expanded_tokens(right))
     return len(left_tokens & right_tokens) / len(left_tokens)
+
+
+def academic_token_overlap_ratio(left: str, right: str) -> float:
+    """Return coverage after conservative academic paraphrase normalization."""
+
+    left_tokens = set(academic_tokens(left))
+    if not left_tokens:
+        return 0.0
+    right_tokens = set(academic_tokens(right))
+    return len(left_tokens & right_tokens) / len(left_tokens)
+
+
+def academic_tokens(text: str) -> list[str]:
+    """Return tokens after conservative academic paraphrase normalization."""
+
+    tokens: list[str] = []
+    for token in expanded_tokens(text):
+        if token in ACADEMIC_DISCOURSE_TOKENS:
+            continue
+        tokens.extend(ACADEMIC_TOKEN_ALIASES.get(token, (token,)))
+    return tokens

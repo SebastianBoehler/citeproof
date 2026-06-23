@@ -123,12 +123,18 @@ def _benchmark_versions(text: str) -> dict[str, str | None]:
         variant = match.group("variant")
         if base in _metric_bases():
             continue
+        if variant and not _looks_like_benchmark_variant(variant):
+            continue
         versions[base] = variant.casefold() if variant else None
     return versions
 
 
 def _metric_bases() -> set[str]:
     return {"AUC", "AUROC", "AUPRC", "BLEU", "CHRF", "F1", "ROUGE"}
+
+
+def _looks_like_benchmark_variant(variant: str) -> bool:
+    return variant[0].isupper() or any(character.isdigit() for character in variant)
 
 
 def _benchmark_name(base: str, variant: str | None) -> str:

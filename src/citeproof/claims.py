@@ -6,10 +6,25 @@ import re
 
 from citeproof.models import AtomicClaim, Claim, ClaimGroup
 
+CHECKABLE_VERBS = (
+    "captures?",
+    "computes?",
+    "contains?",
+    "decreases?",
+    "improves?",
+    "increases?",
+    "outperforms?",
+    "provides?",
+    "reduces?",
+    "solves?",
+    "spans?",
+    "trains?",
+    "uses?",
+)
+VERB_PATTERN = "|".join(CHECKABLE_VERBS)
 AND_SPLIT_RE = re.compile(
-    r"^(?P<subject>[A-Z][A-Za-z0-9_.-]+)\s+(?P<first>.+?)\s+and\s+"
-    r"(?P<second>(?:spans|contains|uses|trains|provides|computes|captures|"
-    r"improves|reduces|increases|decreases|outperforms)\b.+)$"
+    rf"^(?P<subject>.+?)\s+(?P<first>(?:{VERB_PATTERN})\b.+?)\s+and\s+"
+    rf"(?P<second>(?:{VERB_PATTERN})\b.+)$"
 )
 
 
