@@ -25,8 +25,9 @@ PARENTHESIZED_SOURCE_CITATION_RE = re.compile(
 )
 CLAUSE_PREDICATE_RE = re.compile(
     r"\b(?:achieves?|are|captures?|computes?|contains?|covers?|defines?|has|have|"
-    r"improves?|increases?|is|outperforms?|provides?|reduces?|requires?|shows?|"
-    r"spans?|trains?|uses?|was|were)\b",
+    r"evaluate(?:d|s)?|improves?|increases?|introduce(?:d|s)?|is|outperforms?|"
+    r"predict(?:ed|s)?|provides?|reduces?|requires?|shows?|spans?|trains?|uses?|"
+    r"was|were)\b",
     re.IGNORECASE,
 )
 LATEX_ENVIRONMENTS_TO_DROP = (

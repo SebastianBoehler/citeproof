@@ -155,6 +155,33 @@ def test_parse_claims_scopes_parenthesized_dataset_citations() -> None:
     ]
 
 
+def test_parse_claims_splits_survey_semicolon_citation_clauses() -> None:
+    claims = parse_claims(
+        "Neural approaches extended this: Kim and Lipani~\\cite{kim2022multitask} "
+        "jointly predict user actions and utterances in goal-oriented settings; "
+        "Lin et al.~\\cite{lin2022gentus} introduced GenTUS for task-oriented user simulation; "
+        "Yoon et al.~\\cite{yoon2024evaluating} evaluated LLMs as user simulators for "
+        "conversational recommendation, finding discrepancies with real behavior."
+    )
+
+    assert claims == [
+        Claim(
+            "Neural approaches extended this: Kim and Lipani jointly predict user actions "
+            "and utterances in goal-oriented settings.",
+            ("kim2022multitask",),
+        ),
+        Claim(
+            "Lin et al. introduced GenTUS for task-oriented user simulation.",
+            ("lin2022gentus",),
+        ),
+        Claim(
+            "Yoon et al. evaluated LLMs as user simulators for conversational recommendation, "
+            "finding discrepancies with real behavior.",
+            ("yoon2024evaluating",),
+        ),
+    ]
+
+
 def test_parse_claims_keeps_author_citation_scope() -> None:
     claims = parse_claims(
         "Naous et al.~\\cite{naous2025flipping} recently demonstrated that "

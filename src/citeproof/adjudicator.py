@@ -8,6 +8,7 @@ from citeproof.claims import atomize_claim
 from citeproof.entailment import judge_evidence
 from citeproof.fact_lenses import inspect_facts
 from citeproof.models import Claim, EvidenceJudgment, FactInspection, FailureMode, Label
+from citeproof.survey_support import has_survey_claim_support
 
 Judge = Callable[[str, str], EvidenceJudgment]
 
@@ -66,6 +67,12 @@ def adjudicate_evidence(
 def _adjudicate_single(claim: str, evidence: str, judge: Judge) -> EvidenceJudgment:
     heuristic = judge_evidence(claim, evidence)
     facts = inspect_facts(claim, evidence)
+    if (
+        facts.label == Label.PARTIALLY_SUPPORTED
+        and _is_hedge_only(facts)
+        and has_survey_claim_support(claim, evidence)
+    ):
+        facts = FactInspection(None, ())
     nli = None if judge is judge_evidence else judge(claim, evidence)
     return adjudicate_judgments(heuristic=heuristic, facts=facts, nli=nli)
 
@@ -181,6 +188,13 @@ def _fact_failure_mode(facts: FactInspection) -> FailureMode:
 
 def _has_hedge_finding(facts: FactInspection) -> bool:
     return any("hedged" in finding.lower() or "inconclusive" in finding.lower() for finding in facts.findings)
+
+
+def _is_hedge_only(facts: FactInspection) -> bool:
+    return bool(facts.findings) and all(
+        "hedged" in finding.lower() or "inconclusive" in finding.lower()
+        for finding in facts.findings
+    )
 
 
 def _with_failure_mode(judgment: EvidenceJudgment, fallback: FailureMode) -> EvidenceJudgment:

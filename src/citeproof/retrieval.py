@@ -6,6 +6,7 @@ from math import sqrt
 import re
 
 from citeproof.models import Claim, SourceChunk
+from citeproof.survey_support import has_survey_claim_support
 from citeproof.text import expanded_tokens, normalize_extraction_artifacts
 
 CLAIM_ANCHOR_RE = re.compile(
@@ -13,6 +14,7 @@ CLAIM_ANCHOR_RE = re.compile(
     r"[A-Z][a-z]+[A-Z][A-Za-z0-9.]*|[A-Z]{3,}[A-Za-z0-9.-]*)\b"
 )
 ANCHOR_MATCH_BONUS = 0.25
+SURVEY_SUPPORT_BONUS = 0.6
 
 
 def retrieve_evidence(claim: Claim, chunks: list[SourceChunk], limit: int = 3) -> list[SourceChunk]:
@@ -47,6 +49,8 @@ def _score_chunk(claim_text: str, chunk: SourceChunk) -> SourceChunk:
     anchor_overlap = len(_claim_anchor_tokens(claim_text) & chunk_tokens)
     score = overlap / sqrt(len(claim_tokens) * len(chunk_tokens))
     score += anchor_overlap * ANCHOR_MATCH_BONUS
+    if has_survey_claim_support(claim_text, chunk.text):
+        score += SURVEY_SUPPORT_BONUS
     return SourceChunk(**{**chunk.__dict__, "score": round(score, 4)})
 
 

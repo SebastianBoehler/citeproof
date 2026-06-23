@@ -8,10 +8,12 @@ import re
 
 from citeproof.metric_support import has_metric_definition_support
 from citeproof.models import Claim, EvidenceCandidate, SourceChunk
+from citeproof.survey_support import has_survey_claim_support
 from citeproof.text import expanded_tokens, split_sentences, tokenize
 
 CONFLICT_RERANK_BONUS = 0.22
 METRIC_SUPPORT_RERANK_BONUS = 0.3
+SURVEY_SUPPORT_RERANK_BONUS = 0.4
 CONFLICT_CUE_RE = re.compile(
     r"\b("
     r"unchanged|no\s+change|no\s+difference|no\s+improvement|no\s+reduction|"
@@ -43,12 +45,16 @@ def select_rationales(
             if identity_groups and not _matches_identity_group(identity_groups, expanded_tokens(window)):
                 continue
             lexical_score = _lexical_score(claim.text, window)
-            if lexical_score < min_score:
+            support_bonus = (
+                _metric_support_rerank_bonus(claim.text, window)
+                + _survey_support_rerank_bonus(claim.text, window)
+            )
+            if lexical_score < min_score and not support_bonus:
                 continue
             rerank_score = (
                 lexical_score
                 + _conflict_rerank_bonus(window)
-                + _metric_support_rerank_bonus(claim.text, window)
+                + support_bonus
             )
             scored.append(_candidate(chunk, window, lexical_score, rerank_score))
     ranked = sorted(
@@ -122,6 +128,10 @@ def _conflict_rerank_bonus(text: str) -> float:
 
 def _metric_support_rerank_bonus(claim: str, text: str) -> float:
     return METRIC_SUPPORT_RERANK_BONUS if has_metric_definition_support(claim, text) else 0.0
+
+
+def _survey_support_rerank_bonus(claim: str, text: str) -> float:
+    return SURVEY_SUPPORT_RERANK_BONUS if has_survey_claim_support(claim, text) else 0.0
 
 
 def _source_identity_token_groups(claim: str) -> tuple[frozenset[str], ...]:

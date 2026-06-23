@@ -9,6 +9,7 @@ from citeproof.fact_lenses import compatible_bounded_quantity, inspect_facts
 from citeproof.metric_support import has_metric_definition_support
 from citeproof.models import EvidenceJudgment, Label
 from citeproof.quantities import quantity_mentions
+from citeproof.survey_support import has_survey_claim_support
 from citeproof.text import token_overlap_ratio
 
 POSITIVE_CLAIM_RE = re.compile(
@@ -92,7 +93,9 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
     """Classify whether a source span supports, contradicts, or misses a claim."""
 
     overlap = token_overlap_ratio(claim, evidence)
-    if overlap < 0.18:
+    survey_support = has_survey_claim_support(claim, evidence)
+    semantic_support = survey_support or _has_semantic_support(claim, evidence, overlap)
+    if overlap < 0.18 and not semantic_support:
         return EvidenceJudgment(Label.UNSUPPORTED, 0.25, "Evidence has too little claim overlap.")
 
     fact_inspection = inspect_facts(claim, evidence)
@@ -113,7 +116,9 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
             "Evidence uses an incompatible polarity for the claimed result.",
         )
 
-    if fact_inspection.label == Label.PARTIALLY_SUPPORTED:
+    if fact_inspection.label == Label.PARTIALLY_SUPPORTED and not (
+        survey_support and _is_hedge_only(fact_inspection.findings)
+    ):
         return EvidenceJudgment(
             Label.PARTIALLY_SUPPORTED, 0.68, "; ".join(fact_inspection.findings)
         )
@@ -125,7 +130,7 @@ def judge_evidence(claim: str, evidence: str) -> EvidenceJudgment:
             "Evidence supports a narrower claim than the draft states.",
         )
 
-    if _has_semantic_support(claim, evidence, overlap):
+    if semantic_support:
         return EvidenceJudgment(Label.SUPPORTED, 0.74, "Anchored paraphrase support.")
 
     if overlap >= 0.38 and _claims_resource_reduction(claim):
@@ -197,6 +202,13 @@ def _has_scope_gap(claim: str, evidence: str) -> bool:
     return bool(UNIVERSAL_CLAIM_RE.search(claim) and SCOPED_EVIDENCE_RE.search(evidence))
 
 
+def _is_hedge_only(findings: tuple[str, ...]) -> bool:
+    return bool(findings) and all(
+        "hedged" in finding.lower() or "inconclusive" in finding.lower()
+        for finding in findings
+    )
+
+
 def _has_semantic_support(claim: str, evidence: str, overlap: float) -> bool:
     claim_lower = claim.lower()
     evidence_lower = evidence.lower()
@@ -205,6 +217,8 @@ def _has_semantic_support(claim: str, evidence: str, overlap: float) -> bool:
     if has_causal_design_support(claim, evidence, overlap):
         return True
     if has_metric_definition_support(claim, evidence):
+        return True
+    if has_survey_claim_support(claim, evidence):
         return True
     return bool(
         "languages" in claim_lower
