@@ -30,7 +30,7 @@ from citeproof.role_lens import inspect_role_conflicts
 from citeproof.statistical_lens import inspect_statistical_conflicts
 from citeproof.strength_lens import inspect_strength_conflicts, inspect_strength_tensions
 from citeproof.technical_property_lens import inspect_technical_property_conflicts
-from citeproof.text import token_overlap_ratio
+from citeproof.text import normalize_extraction_artifacts, token_overlap_ratio
 from citeproof.training_config_lens import inspect_training_config_conflicts
 
 MATERIAL_ANCHOR_RE = re.compile(
@@ -63,12 +63,16 @@ GENERIC_ANCHORS = {
     "Evidence",
     "Experiment",
     "Figure",
+    "IID",
     "Method",
+    "MEANT",
     "Model",
+    "NLG",
     "Result",
     "Table",
     "Task",
     "The",
+    "YISI",
 }
 ENTITY_CONFLICT_MIN_OVERLAP = 0.45
 
@@ -195,6 +199,7 @@ def _entity_conflicts(claim: str, evidence: str) -> list[str]:
 def _material_anchors(text: str) -> tuple[str, ...]:
     anchors: list[str] = []
     seen: set[str] = set()
+    text = normalize_extraction_artifacts(text)
     candidates = [(match.start(), match.group(0)) for match in MATERIAL_ANCHOR_RE.finditer(text)]
     candidates += [
         (match.start(), match.group(0))
@@ -227,7 +232,8 @@ def _is_material_anchor(anchor: str) -> bool:
 
 
 def _normalize_anchor(anchor: str) -> str:
-    return re.sub(r"\s+", " ", anchor.casefold())
+    key = re.sub(r"\s+", " ", anchor.casefold())
+    return "lm" if key in {"lm", "lms", "llm", "llms"} else key
 
 
 def _starts_inside_capitalized_phrase(text: str, start: int) -> bool:

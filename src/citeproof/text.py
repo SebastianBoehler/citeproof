@@ -6,6 +6,9 @@ import re
 
 WORD_RE = re.compile(r"[a-z0-9]+")
 SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[.!?])\s+")
+CAMEL_BOUNDARY_RE = re.compile(r"(?<=[a-z])(?=[A-Z])")
+SPACED_INITIAL_RE = re.compile(r"\b([A-Z])\s+([A-Z]{2,})\b")
+SPACED_CAP_WORD_RE = re.compile(r"\b([A-Z]{2,})\s+([A-Z]{2,})\b")
 
 STOPWORDS = {
     "a",
@@ -41,6 +44,25 @@ def tokenize(text: str) -> list[str]:
     return [token for token in WORD_RE.findall(text.lower()) if token not in STOPWORDS]
 
 
+def normalize_extraction_artifacts(text: str) -> str:
+    """Compact common PDF-extracted acronym splits such as ``B LEURT``."""
+
+    previous = None
+    compacted = text
+    while previous != compacted:
+        previous = compacted
+        compacted = SPACED_INITIAL_RE.sub(r"\1\2", compacted)
+        compacted = SPACED_CAP_WORD_RE.sub(r"\1\2", compacted)
+    return compacted
+
+
+def expanded_tokens(text: str) -> list[str]:
+    """Return tokens plus variants normalized for PDF and CamelCase artifacts."""
+
+    normalized = CAMEL_BOUNDARY_RE.sub(" ", normalize_extraction_artifacts(text))
+    return list(dict.fromkeys([*tokenize(text), *tokenize(normalized)]))
+
+
 def split_sentences(text: str) -> list[str]:
     """Split text into rough sentences."""
 
@@ -74,8 +96,8 @@ def chunk_text(text: str, max_chars: int = 700) -> list[str]:
 def token_overlap_ratio(left: str, right: str) -> float:
     """Return the share of left tokens covered by right tokens."""
 
-    left_tokens = set(tokenize(left))
+    left_tokens = set(expanded_tokens(left))
     if not left_tokens:
         return 0.0
-    right_tokens = set(tokenize(right))
+    right_tokens = set(expanded_tokens(right))
     return len(left_tokens & right_tokens) / len(left_tokens)

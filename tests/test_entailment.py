@@ -1,3 +1,5 @@
+import pytest
+
 from citeproof.entailment import judge_evidence
 from citeproof.models import Label
 
@@ -127,6 +129,34 @@ def test_detects_metric_paraphrase_support() -> None:
     )
 
     assert judgment.label == Label.SUPPORTED
+
+
+@pytest.mark.parametrize(
+    ("claim", "evidence"),
+    [
+        (
+            "Liu et al. showed that word-overlap metrics correlate weakly "
+            "with human judgments for dialogue.",
+            "We find that all metrics show either weak or no correlation with human "
+            "judgements, despite the fact that word overlap metrics have been used "
+            "extensively in the literature for evaluating dialogue response models.",
+        ),
+        (
+            "BERTScore uses contextual embeddings to capture semantic similarity beyond "
+            "surface matching.",
+            "We propose BERTS CORE, an automatic evaluation metric for text generation. "
+            "Instead of exact matches, we compute token similarity using contextual embeddings.",
+        ),
+        (
+            "BLEURT is a learned metric robust to distribution shifts.",
+            "We propose B LEURT, a learned evaluation metric based on BERT. "
+            "Our pretraining scheme is critical to ensure robustness when training data "
+            "is scarce, skewed, or out-of-domain.",
+        ),
+    ],
+)
+def test_actual_metric_definition_passages_are_supported(claim: str, evidence: str) -> None:
+    assert judge_evidence(claim, evidence).label == Label.SUPPORTED
 
 
 def test_language_negation_is_not_supported() -> None:

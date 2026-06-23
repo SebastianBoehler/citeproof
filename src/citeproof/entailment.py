@@ -6,6 +6,7 @@ import re
 
 from citeproof.causal_support import has_causal_design_support
 from citeproof.fact_lenses import compatible_bounded_quantity, inspect_facts
+from citeproof.metric_support import has_metric_definition_support
 from citeproof.models import EvidenceJudgment, Label
 from citeproof.quantities import quantity_mentions
 from citeproof.text import token_overlap_ratio
@@ -203,15 +204,7 @@ def _has_semantic_support(claim: str, evidence: str, overlap: float) -> bool:
         return True
     if has_causal_design_support(claim, evidence, overlap):
         return True
-    if (
-        "bertscore" in claim_lower
-        and "bertscore" in evidence_lower
-        and "semantic" in claim_lower
-        and "similarity" in claim_lower
-        and "similarity" in evidence_lower
-        and "embedding" in evidence_lower
-        and ("n-gram" in evidence_lower or "matching" in evidence_lower)
-    ):
+    if has_metric_definition_support(claim, evidence):
         return True
     return bool(
         "languages" in claim_lower

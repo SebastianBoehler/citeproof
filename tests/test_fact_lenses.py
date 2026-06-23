@@ -201,6 +201,33 @@ def test_gpt4_anchor_does_not_match_gpt4o() -> None:
     assert any("GPT-4o" in finding for finding in result.findings)
 
 
+def test_metric_anchor_accepts_pdf_spaced_caps() -> None:
+    result = inspect_facts(
+        "BERTScore uses contextual embeddings.",
+        "BERTS CORE uses contextual embeddings for text generation evaluation.",
+    )
+
+    assert result.label != Label.CONTRADICTED
+
+
+def test_background_metric_acronyms_are_not_anchor_swaps() -> None:
+    result = inspect_facts(
+        "BERTScore uses contextual embeddings.",
+        "Y ISI is similar to M EANT. However, we use contextual embeddings.",
+    )
+
+    assert result.label != Label.CONTRADICTED
+
+
+def test_lm_and_llm_acronyms_are_compatible_anchors() -> None:
+    result = inspect_facts(
+        "Assistant-trained LLMs make poor user simulators.",
+        "Assistant LMs make for poor user simulators.",
+    )
+
+    assert result.label != Label.CONTRADICTED
+
+
 def test_detects_use_negation_fact_conflict() -> None:
     result = inspect_facts(
         "The method uses LoRA adapters.",

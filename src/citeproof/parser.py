@@ -17,6 +17,12 @@ SELF_METHOD_CITATION_RE = re.compile(
     re.IGNORECASE,
 )
 METHOD_SCOPE_SUFFIX_RE = re.compile(r"^[,;:]?\s*(?:across|for|in|of|on|to|under|with)\b", re.IGNORECASE)
+PARENTHESIZED_SOURCE_CITATION_RE = re.compile(
+    r"(?P<context>\b(?:an?|the)\s+(?:[A-Za-z-]+\s+){0,4}"
+    r"(?:benchmark|collection|corpus|dataset))\s*"
+    r"\(\s*(?P<name>[^()\\]+?)\s*~?\s*(?P<cite>\\cite[a-zA-Z*]*\{[^}]+\})\s*\)",
+    re.IGNORECASE,
+)
 CLAUSE_PREDICATE_RE = re.compile(
     r"\b(?:achieves?|are|captures?|computes?|contains?|covers?|defines?|has|have|"
     r"improves?|increases?|is|outperforms?|provides?|reduces?|requires?|shows?|"
@@ -78,6 +84,9 @@ def clean_claim_text(text: str) -> str:
 def split_citation_clauses(sentence: str) -> list[str]:
     """Split one sentence into citation-local clauses when the boundary is explicit."""
 
+    source_pieces = _scoped_parenthesized_source_citations(sentence)
+    if source_pieces:
+        return source_pieces
     scoped_piece = _scoped_mid_sentence_method_citation(sentence)
     if scoped_piece:
         return [scoped_piece]
@@ -94,6 +103,27 @@ def split_citation_clauses(sentence: str) -> list[str]:
 
 def _split_latex_keys(raw: str) -> list[str]:
     return [part.strip() for part in raw.split(",")]
+
+
+def _scoped_parenthesized_source_citations(sentence: str) -> list[str]:
+    matches = list(PARENTHESIZED_SOURCE_CITATION_RE.finditer(sentence))
+    if not matches:
+        return []
+    matched_citation_keys = [
+        key
+        for match in matches
+        for key in extract_citation_keys(match.group("cite"))
+    ]
+    if set(matched_citation_keys) != set(extract_citation_keys(sentence)):
+        return []
+    return [
+        f"{_strip_source_name(match.group('name'))} is {match.group('context')} {match.group('cite')}."
+        for match in matches
+    ]
+
+
+def _strip_source_name(name: str) -> str:
+    return re.sub(r"\s+", " ", name.replace("~", " ")).strip(" .;,")
 
 
 def _scoped_mid_sentence_method_citation(sentence: str) -> str | None:

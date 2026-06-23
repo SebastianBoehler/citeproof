@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 from math import sqrt
+import re
 
 from citeproof.models import Claim, SourceChunk
-from citeproof.text import tokenize
+from citeproof.text import expanded_tokens, normalize_extraction_artifacts
+
+CLAIM_ANCHOR_RE = re.compile(
+    r"\b(?:[A-Z]+[A-Za-z0-9.-]*\d+[A-Za-z0-9.-]*|[A-Z][A-Za-z]*[A-Z][A-Za-z0-9.]*|"
+    r"[A-Z][a-z]+[A-Z][A-Za-z0-9.]*|[A-Z]{3,}[A-Za-z0-9.-]*)\b"
+)
+ANCHOR_MATCH_BONUS = 0.25
 
 
 def retrieve_evidence(claim: Claim, chunks: list[SourceChunk], limit: int = 3) -> list[SourceChunk]:
@@ -32,10 +39,21 @@ def _citation_scoped_chunks(claim: Claim, chunks: list[SourceChunk]) -> list[Sou
 
 
 def _score_chunk(claim_text: str, chunk: SourceChunk) -> SourceChunk:
-    claim_tokens = set(tokenize(claim_text))
-    chunk_tokens = set(tokenize(chunk.text))
+    claim_tokens = set(expanded_tokens(claim_text))
+    chunk_tokens = set(expanded_tokens(chunk.text))
     if not claim_tokens or not chunk_tokens:
         return SourceChunk(**{**chunk.__dict__, "score": 0.0})
     overlap = len(claim_tokens & chunk_tokens)
+    anchor_overlap = len(_claim_anchor_tokens(claim_text) & chunk_tokens)
     score = overlap / sqrt(len(claim_tokens) * len(chunk_tokens))
+    score += anchor_overlap * ANCHOR_MATCH_BONUS
     return SourceChunk(**{**chunk.__dict__, "score": round(score, 4)})
+
+
+def _claim_anchor_tokens(claim_text: str) -> set[str]:
+    normalized = normalize_extraction_artifacts(claim_text)
+    return {
+        token
+        for match in CLAIM_ANCHOR_RE.finditer(normalized)
+        for token in expanded_tokens(match.group(0))
+    }

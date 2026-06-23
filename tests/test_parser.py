@@ -142,6 +142,19 @@ def test_parse_claims_scopes_mid_sentence_method_citation() -> None:
     ]
 
 
+def test_parse_claims_scopes_parenthesized_dataset_citations() -> None:
+    claims = parse_claims(
+        "We train on 6{,}000 samples drawn equally from an open-domain corpus "
+        "(WildChat~\\cite{zhao2024wildchat}) and a task-oriented corpus "
+        "(Schema-Guided Dialog~\\cite{rastogi2020sgd}), and compare against pretrained base models."
+    )
+
+    assert claims == [
+        Claim("WildChat is an open-domain corpus.", ("zhao2024wildchat",)),
+        Claim("Schema-Guided Dialog is a task-oriented corpus.", ("rastogi2020sgd",)),
+    ]
+
+
 def test_parse_claims_keeps_author_citation_scope() -> None:
     claims = parse_claims(
         "Naous et al.~\\cite{naous2025flipping} recently demonstrated that "
