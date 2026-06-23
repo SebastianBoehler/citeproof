@@ -1,5 +1,5 @@
 from citeproof.dashboard import paper_report_to_html, results_to_html
-from citeproof.models import EvidenceSpan, Label, VerificationResult
+from citeproof.models import EvidenceSpan, FailureMode, Label, VerificationResult
 from citeproof.paper import PaperVerificationReport
 
 
@@ -60,3 +60,21 @@ def test_paper_report_to_html_contains_mapping_summary() -> None:
     assert "CiteProof Paper Audit" in html
     assert "Mapped sources" in html
     assert "jones2023adaptive" in html
+
+
+def test_results_to_html_makes_failure_reason_prominent() -> None:
+    result = VerificationResult(
+        claim="Method X works everywhere.",
+        label=Label.PARTIALLY_SUPPORTED,
+        confidence=0.72,
+        citations=("smith2024",),
+        evidence=(),
+        reason="Evidence supports a narrower claim than the draft states.",
+        failure_mode=FailureMode.SCOPE_OVERSTATEMENT,
+    )
+
+    html = results_to_html([result])
+
+    assert "Why this label?" in html
+    assert "failure-mode-value" in html
+    assert "scope_overstatement" in html
