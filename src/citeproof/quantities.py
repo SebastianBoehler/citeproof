@@ -40,8 +40,8 @@ _WORD_NUMBER = (
 _WORD_UNIT = (
     r"percent|arms?|centers?|centres?|cohorts?|conversations?|days?|dialogues?|domains?|"
     r"doses?|examples?|g|gpus?|groups?|heads?|hours?|kg|languages?|layers?|mg|minutes?|ml|months?|"
-    r"parameters?|"
-    r"participants?|patients?|samples?|seconds?|sites?|studies|subjects?|trials?|turns?|"
+    r"papers?|parameters?|"
+    r"participants?|patients?|points?|samples?|seconds?|sites?|studies|subjects?|times?|trials?|turns?|"
     r"tokens?|weeks?|years?"
 )
 _STOPWORD_PATTERN = r"and|as|by|for|from|in|of|on|or|than|to|with|without"
@@ -156,6 +156,8 @@ def _normalize_unit(unit: str) -> str:
         return "%"
     if normalized == "studies":
         return "study"
+    if normalized == "times":
+        return "time"
     return normalized.rstrip("s")
 
 

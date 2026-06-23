@@ -19,10 +19,14 @@ class MetricValue:
 METRIC_NAME = (
     r"accuracy|auprc|auroc|auc|bleu|chrf|f1(?:\s+score)?|loss|perplexity|rouge(?:-\w+)?"
 )
-METRIC_VALUE_RE = re.compile(
+METRIC_FORWARD_VALUE_RE = re.compile(
     rf"\b(?P<metric>{METRIC_NAME})\b"
-    r"(?:\s+score)?[^.;\n]{0,40}?"
-    r"\b(?:of|=|was|is|achieved|reached)?\s*(?P<value>\d+(?:\.\d+)?)\b",
+    r"(?:\s+score)?\s*(?:of|=|was|is|achieved|reached|:)\s*"
+    r"(?P<value>\d+(?:\.\d+)?)\b",
+    re.IGNORECASE,
+)
+METRIC_BACKWARD_VALUE_RE = re.compile(
+    rf"\b(?P<value>\d+(?:\.\d+)?)\s+(?P<metric>{METRIC_NAME})\b",
     re.IGNORECASE,
 )
 VERSIONED_BENCHMARK_RE = re.compile(
@@ -77,7 +81,17 @@ def _benchmark_version_conflicts(claim: str, evidence: str) -> list[str]:
 
 def _metric_values(text: str) -> tuple[MetricValue, ...]:
     values: list[MetricValue] = []
-    for match in METRIC_VALUE_RE.finditer(text):
+    for match in METRIC_FORWARD_VALUE_RE.finditer(text):
+        values.append(
+            MetricValue(
+                _normalize_metric(match.group("metric")),
+                Decimal(match.group("value")),
+                match.group(0).strip(),
+            )
+        )
+    for match in METRIC_BACKWARD_VALUE_RE.finditer(text):
+        if _is_delta_metric(text, match.start()):
+            continue
         values.append(
             MetricValue(
                 _normalize_metric(match.group("metric")),
@@ -86,6 +100,11 @@ def _metric_values(text: str) -> tuple[MetricValue, ...]:
             )
         )
     return tuple(values)
+
+
+def _is_delta_metric(text: str, start: int) -> bool:
+    prefix = text[max(0, start - 32) : start]
+    return bool(re.search(r"\b(?:by|over|more\s+than|less\s+than|at\s+least)\s*$", prefix, re.IGNORECASE))
 
 
 def _normalize_metric(metric: str) -> str:

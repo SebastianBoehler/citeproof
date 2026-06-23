@@ -147,6 +147,8 @@ def _number_conflicts(claim: str, evidence: str) -> list[str]:
             continue
         claim_numbers = {item.number for item in claim_items}
         evidence_numbers = {item.number for item in evidence_items}
+        if claim_numbers <= evidence_numbers:
+            continue
         if claim_numbers != evidence_numbers:
             if compatible_bounded_quantity(claim_items, evidence_items, claim, evidence):
                 continue
