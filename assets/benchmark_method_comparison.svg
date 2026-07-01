@@ -31,9 +31,9 @@
 <rect x="191.7" y="165.9" width="20" height="182.1" fill="#2ca02c" rx="2"/>
 <rect x="215.7" y="272.1" width="20" height="75.9" fill="#d62728" rx="2"/>
 <text class="tick" x="201.7" y="370" text-anchor="middle">Challenge</text>
-<rect x="266.1" y="128.7" width="20" height="219.3" fill="#1f77b4" rx="2"/>
-<rect x="290.1" y="219.0" width="20" height="129.0" fill="#2ca02c" rx="2"/>
-<rect x="314.1" y="219.0" width="20" height="129.0" fill="#d62728" rx="2"/>
+<rect x="266.1" y="186.8" width="20" height="161.3" fill="#1f77b4" rx="2"/>
+<rect x="290.1" y="193.2" width="20" height="154.8" fill="#2ca02c" rx="2"/>
+<rect x="314.1" y="231.9" width="20" height="116.1" fill="#d62728" rx="2"/>
 <text class="tick" x="300.1" y="370" text-anchor="middle">Heldout</text>
 <text class="label" x="385.3333333333333" y="58">False-supported</text>
 <text class="hint" x="385.3333333333333" y="74">lower is better</text>
@@ -59,7 +59,7 @@
 <text class="tick" x="533.0" y="370" text-anchor="middle">Challenge</text>
 <rect x="597.4" y="348.0" width="20" height="0.0" fill="#1f77b4" rx="2"/>
 <rect x="621.4" y="348.0" width="20" height="0.0" fill="#2ca02c" rx="2"/>
-<rect x="645.4" y="335.1" width="20" height="12.9" fill="#d62728" rx="2"/>
+<rect x="645.4" y="341.6" width="20" height="6.5" fill="#d62728" rx="2"/>
 <text class="tick" x="631.4" y="370" text-anchor="middle">Heldout</text>
 <text class="label" x="716.6666666666666" y="58">Manual review</text>
 <text class="hint" x="716.6666666666666" y="74">lower is better</text>
@@ -83,8 +83,8 @@
 <rect x="854.3" y="317.7" width="20" height="30.3" fill="#2ca02c" rx="2"/>
 <rect x="878.3" y="272.1" width="20" height="75.9" fill="#d62728" rx="2"/>
 <text class="tick" x="864.3" y="370" text-anchor="middle">Challenge</text>
-<rect x="928.8" y="270.6" width="20" height="77.4" fill="#1f77b4" rx="2"/>
-<rect x="952.8" y="335.1" width="20" height="12.9" fill="#2ca02c" rx="2"/>
-<rect x="976.8" y="231.9" width="20" height="116.1" fill="#d62728" rx="2"/>
+<rect x="928.8" y="238.4" width="20" height="109.6" fill="#1f77b4" rx="2"/>
+<rect x="952.8" y="341.6" width="20" height="6.5" fill="#2ca02c" rx="2"/>
+<rect x="976.8" y="219.0" width="20" height="129.0" fill="#d62728" rx="2"/>
 <text class="tick" x="962.8" y="370" text-anchor="middle">Heldout</text>
 </svg>

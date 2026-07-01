@@ -193,9 +193,9 @@ uv run --extra nli citeproof compare-benchmark examples/eval_suite.json \
   --json-output reports/benchmark_comparison.json
 ```
 
-The current `heldout_real_v0` split is useful for development tracking, but it
-has been inspected during implementation. Use a fresh frozen held-out split
-before making publication-style claims about final accuracy.
+The `heldout_real_v0` split is useful for development tracking, but it has been
+inspected during implementation. `heldout_real_v1` is the fresh frozen
+aggregate-only split for final-score checks.
 
 Locked benchmark datasets must be treated as aggregate-only evaluation sets.
 `eval-suite` and `compare-benchmark` redact per-case failures for entries marked

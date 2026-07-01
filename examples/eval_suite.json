@@ -39,6 +39,14 @@
       "layer": "heldout_real",
       "source_type": "real_paper",
       "locked": true
+    },
+    {
+      "name": "heldout_real_v1",
+      "path": "heldout_real_v1/claim_support.jsonl",
+      "split": "heldout_real_v1",
+      "layer": "heldout_real",
+      "source_type": "real_paper",
+      "locked": true
     }
   ],
   "benchmark_layers": {
