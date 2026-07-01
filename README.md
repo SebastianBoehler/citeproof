@@ -197,6 +197,11 @@ The current `heldout_real_v0` split is useful for development tracking, but it
 has been inspected during implementation. Use a fresh frozen held-out split
 before making publication-style claims about final accuracy.
 
+Locked benchmark datasets must be treated as aggregate-only evaluation sets.
+`eval-suite` and `compare-benchmark` redact per-case failures for entries marked
+`"locked": true`; iterate on regression and challenge layers, then run locked
+held-out layers only as a final score check.
+
 ## Check Modes
 
 CiteProof exposes checks as separate commands rather than one loose mode flag:

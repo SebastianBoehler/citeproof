@@ -21,6 +21,47 @@ def test_compare_eval_suite_reports_method_metrics(tmp_path: Path) -> None:
     assert report["layer_ranking"]["regression"][0]["accuracy"] == 1.0
 
 
+def test_compare_eval_suite_redacts_locked_dataset_failures(tmp_path: Path) -> None:
+    dataset = tmp_path / "cases.jsonl"
+    dataset.write_text(
+        json.dumps(
+            {
+                "id": "heldout-secret-failure",
+                "claim": "A improves B.",
+                "evidence": "A improves B.",
+                "expected_label": "unsupported",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "suite.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "datasets": [
+                    {
+                        "name": "locked-heldout",
+                        "path": dataset.name,
+                        "layer": "heldout_real",
+                        "locked": True,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = compare_eval_suite(manifest, ["citeproof", "lexical"])
+
+    for method_report in report["methods"]:
+        dataset_report = method_report["datasets"][0]
+        assert dataset_report["failure_count"] == 1
+        assert dataset_report["failure_details_redacted"] is True
+        assert dataset_report["failures"] == []
+    assert "heldout-secret-failure" not in json.dumps(report)
+
+
 def test_compare_benchmark_cli_writes_json(tmp_path: Path) -> None:
     manifest = _write_suite(tmp_path)
     output = tmp_path / "comparison.json"

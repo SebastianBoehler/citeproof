@@ -53,6 +53,18 @@ def dataset_report_metadata(entry: dict[str, object]) -> dict[str, object]:
     }
 
 
+def dataset_failures(cases: list[dict[str, object]], entry: dict[str, object]) -> dict[str, object]:
+    """Return failure metadata while redacting locked benchmark case details."""
+
+    failures = [case for case in cases if not case["pass"]]
+    locked = bool(entry["locked"])
+    return {
+        "failure_count": len(failures),
+        "failure_details_redacted": locked,
+        "failures": [] if locked else failures,
+    }
+
+
 def layer_policy(manifest: dict[str, object]) -> dict[str, object]:
     """Return declared layer policy metadata."""
 

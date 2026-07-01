@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable
 
 from citeproof.benchmark_manifest import (
+    dataset_failures,
     dataset_report_metadata,
     layer_policy,
     load_benchmark_manifest,
@@ -54,7 +55,7 @@ def run_eval_suite(
                 "split": str(entry.get("split", "unspecified")),
                 **dataset_report_metadata(entry),
                 "summary": summary.to_dict(),
-                "failures": [case for case in cases if not case["pass"]],
+                **dataset_failures(cases, entry),
             }
         )
     aggregate = summarize(all_expected, all_predicted)

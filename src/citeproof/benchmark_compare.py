@@ -13,6 +13,7 @@ from typing import Any
 
 from citeproof.adjudicator import adjudicate_evidence
 from citeproof.benchmark_manifest import (
+    dataset_failures,
     dataset_report_metadata,
     layer_policy,
     load_benchmark_manifest,
@@ -179,7 +180,7 @@ def _run_method(
                 "split": str(entry.get("split", "unspecified")),
                 **dataset_report_metadata(entry),
                 "summary": summary.to_dict(),
-                "failures": [row for row in rows if not row["pass"]],
+                **dataset_failures(rows, entry),
             }
         )
     return {

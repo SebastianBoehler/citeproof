@@ -141,6 +141,46 @@ def test_eval_suite_reports_failing_gate(tmp_path: Path) -> None:
     assert report["datasets"][0]["failures"][0]["id"] == "false-supported"
 
 
+def test_eval_suite_redacts_locked_dataset_failures(tmp_path: Path) -> None:
+    dataset = tmp_path / "cases.jsonl"
+    _write_jsonl(
+        dataset,
+        [
+            {
+                "id": "heldout-secret-failure",
+                "claim": "A improves B.",
+                "evidence": "A improves B.",
+                "expected_label": "unsupported",
+            }
+        ],
+    )
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "datasets": [
+                    {
+                        "name": "locked-heldout",
+                        "path": "cases.jsonl",
+                        "layer": "heldout_real",
+                        "locked": True,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = run_eval_suite(manifest)
+
+    dataset_report = report["datasets"][0]
+    assert dataset_report["summary"]["accuracy"] == 0.0
+    assert dataset_report["failure_count"] == 1
+    assert dataset_report["failure_details_redacted"] is True
+    assert dataset_report["failures"] == []
+    assert "heldout-secret-failure" not in json.dumps(report)
+
+
 def test_eval_suite_rejects_unknown_gate(tmp_path: Path) -> None:
     dataset = tmp_path / "cases.jsonl"
     _write_jsonl(
