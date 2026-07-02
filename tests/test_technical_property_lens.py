@@ -19,6 +19,24 @@ def test_detects_inference_fidelity_conflict() -> None:
     assert any("Inference fidelity conflict" in finding for finding in findings)
 
 
+def test_detects_exact_attention_conflict() -> None:
+    findings = inspect_technical_property_conflicts(
+        "The algorithm is an approximate attention method.",
+        "The algorithm computes exact attention with IO-aware tiling.",
+    )
+
+    assert any("Inference fidelity conflict" in finding for finding in findings)
+
+
+def test_detects_memory_representation_conflict() -> None:
+    findings = inspect_technical_property_conflicts(
+        "The system stores retrieval memory in a symbolic knowledge graph.",
+        "The system stores retrieval memory in a dense vector index.",
+    )
+
+    assert any("Memory representation conflict" in finding for finding in findings)
+
+
 def test_detects_trainability_conflict() -> None:
     findings = inspect_technical_property_conflicts(
         "The encoder is frozen during training.",

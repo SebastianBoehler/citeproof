@@ -35,8 +35,27 @@ GROUPS = (
     TechnicalPropertyGroup(
         "Inference fidelity",
         (
-            ("exact", (r"\bexact\s+inference\b",)),
-            ("approximate", (r"\bapproximate\s+inference\b", r"\bapproximation\b")),
+            ("exact", (r"\bexact\s+(?:attention|algorithm|computation|inference|method)\b",)),
+            (
+                "approximate",
+                (
+                    r"\bapproximate\s+(?:attention|algorithm|computation|inference|method)\b",
+                    r"\bapproximation\b",
+                ),
+            ),
+        ),
+    ),
+    TechnicalPropertyGroup(
+        "Memory representation",
+        (
+            (
+                "symbolic knowledge graph",
+                (r"\bsymbolic\s+knowledge\s+graph\b", r"\bknowledge\s+graph\b"),
+            ),
+            (
+                "dense vector index",
+                (r"\bdense\s+(?:vector\s+)?index\b", r"\bvector\s+index\b"),
+            ),
         ),
     ),
     TechnicalPropertyGroup(
@@ -149,16 +168,29 @@ GROUPS = (
 
 TRIGGER_WORDS_RE = re.compile(
     r"\b("
-    r"adapter|all|approximate|approximation|architecture|base|beam|causal|clinical|clm|constant|"
+    r"adapter|all|approximate|approximation|architecture|attention|base|beam|causal|clinical|clm|constant|"
     r"cubic|data|decod(?:e|es|ed|ing)|dense|detection|domain|exact|experts?|"
-    r"exponential|few|fine|fixed|frozen|greedy|inference|keeps?|kept|language|linear|"
-    r"logarithmic|low|masked|medical|mlm|model|modeling|moe|objective|one|out|"
+    r"exponential|few|fine|fixed|frozen|graph|greedy|index|inference|keeps?|kept|knowledge|"
+    r"language|linear|logarithmic|low|masked|medical|memory|mlm|model|modeling|moe|objective|one|out|"
     r"parameters|pretrained|private|public|quadratic|rank|records?|replaced|rewards?|"
     r"real|rtd|sampling|search|shot|simulated|sparse|synthetic|time|token|transformer|"
-    r"tuned|tuning|user|weights?|zero"
+    r"tuned|tuning|user|vector|weights?|zero"
     r")\b",
     re.IGNORECASE,
 )
+SUBJECT_TERMS = {
+    "algorithm",
+    "architecture",
+    "attention",
+    "classifier",
+    "index",
+    "memory",
+    "method",
+    "model",
+    "retrieval",
+    "system",
+    "training",
+}
 
 
 def inspect_technical_property_conflicts(claim: str, evidence: str) -> tuple[str, ...]:
@@ -193,8 +225,12 @@ def _context_overlaps(claim: str, evidence: str) -> bool:
     evidence_tokens = _context_tokens(evidence)
     if not claim_tokens or not evidence_tokens:
         return False
-    return len(claim_tokens & evidence_tokens) / min(len(claim_tokens), len(evidence_tokens)) >= 0.67
+    if len(claim_tokens & evidence_tokens) / min(len(claim_tokens), len(evidence_tokens)) >= 0.67:
+        return True
+    return len((claim_tokens & evidence_tokens) & SUBJECT_TERMS) >= 2
 
 
 def _context_tokens(text: str) -> set[str]:
-    return set(tokenize(TRIGGER_WORDS_RE.sub(" ", text)))
+    tokens = set(tokenize(TRIGGER_WORDS_RE.sub(" ", text)))
+    tokens.update(token for token in tokenize(text) if token in SUBJECT_TERMS)
+    return tokens

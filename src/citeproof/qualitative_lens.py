@@ -55,8 +55,13 @@ REQUIRES_RE = re.compile(
     r"\brequires?\s+(?!no\b)(?P<object>[A-Za-z0-9][A-Za-z0-9 .-]{1,60})",
     re.IGNORECASE,
 )
+NOT_NECESSARY_RE = re.compile(
+    r"\b(?P<object>[A-Za-z0-9][A-Za-z0-9 .-]{1,60}?)\s+"
+    r"(?:is|are|was|were)\s+not\s+necessary\b",
+    re.IGNORECASE,
+)
 OBJECT_STOP_RE = re.compile(
-    r"\b(?:for|during|with|and|but|while|whereas)\b",
+    r"\b(?:for|during|with|and|or|but|while|whereas|when)\b",
     re.IGNORECASE,
 )
 TRIGGER_WORDS_RE = re.compile(
@@ -165,6 +170,8 @@ def _sufficiency_conflicts(claim: str, evidence: str) -> list[str]:
 def _requirement_conflicts(claim: str, evidence: str) -> list[str]:
     claim_negative = [_clean_object(match.group("object")) for match in REQUIRES_NO_RE.finditer(claim)]
     evidence_positive = [_clean_object(match.group("object")) for match in REQUIRES_RE.finditer(evidence)]
+    claim_positive = [_clean_object(match.group("object")) for match in REQUIRES_RE.finditer(claim)]
+    evidence_negative = [_clean_object(match.group("object")) for match in NOT_NECESSARY_RE.finditer(evidence)]
     for negative in claim_negative:
         for positive in evidence_positive:
             if not _objects_overlap(negative, positive):
@@ -173,6 +180,15 @@ def _requirement_conflicts(claim: str, evidence: str) -> list[str]:
             if _context_overlaps(claim, evidence, object_tokens):
                 return [
                     f"Requirement conflict: claim says no {negative} but evidence requires it."
+                ]
+    for positive in claim_positive:
+        for negative in evidence_negative:
+            if not _objects_overlap(positive, negative):
+                continue
+            object_tokens = set(tokenize(positive)) | set(tokenize(negative))
+            if _context_overlaps(claim, evidence, object_tokens):
+                return [
+                    f"Requirement conflict: claim requires {positive} but evidence says it is not necessary."
                 ]
     return []
 

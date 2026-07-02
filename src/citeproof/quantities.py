@@ -16,6 +16,8 @@ class QuantityMention:
 
 _DIGIT_NUMBER = r"\d+(?:,\d{3})*(?:\.\d+)?"
 _ONES = {
+    "a": Decimal("1"),
+    "an": Decimal("1"),
     "one": Decimal("1"),
     "two": Decimal("2"),
     "three": Decimal("3"),
@@ -35,18 +37,24 @@ _TENS = {
 }
 _WORD_NUMBER = (
     r"(?:twenty|thirty|forty|fifty)(?:\s+(?:one|two|three|four|five|six|seven|eight|nine))?"
-    r"|one|two|three|four|five|six|seven|eight|nine|ten"
+    r"|a|an|one|two|three|four|five|six|seven|eight|nine|ten"
 )
 _WORD_UNIT = (
     r"percent|arms?|centers?|centres?|cohorts?|conversations?|days?|dialogues?|domains?|"
     r"doses?|examples?|g|gpus?|groups?|heads?|hours?|kg|languages?|layers?|mg|minutes?|ml|months?|"
+    r"images?|masks?|"
     r"papers?|parameters?|"
     r"participants?|patients?|points?|samples?|seconds?|sites?|studies|subjects?|times?|trials?|turns?|"
     r"tokens?|weeks?|years?"
 )
 _STOPWORD_PATTERN = r"and|as|by|for|from|in|of|on|or|than|to|with|without"
 _BRIDGE_WORD = rf"(?!(?:{_STOPWORD_PATTERN})(?!-)\b)[A-Za-z][A-Za-z-]*"
-_SCALE = {"thousand": Decimal("1000"), "million": Decimal("1000000")}
+_SCALE = {
+    "hundred": Decimal("100"),
+    "thousand": Decimal("1000"),
+    "million": Decimal("1000000"),
+    "billion": Decimal("1000000000"),
+}
 _COMPACT_SCALE = {
     "b": Decimal("1000000000"),
     "k": Decimal("1000"),
@@ -58,11 +66,16 @@ _BRIDGE_STOPWORDS = {
     "by",
     "for",
     "from",
+    "few",
+    "hundred",
     "in",
+    "billion",
+    "million",
     "of",
     "on",
     "or",
     "than",
+    "thousand",
     "to",
     "with",
     "without",
@@ -71,7 +84,9 @@ _BRIDGE_STOPWORDS = {
 _QUANTITY_RE = re.compile(
     rf"(?<![A-Za-z0-9])"
     rf"(?P<value>"
-    rf"(?P<scale_number>{_DIGIT_NUMBER})\s+(?P<scale>thousand|million)"
+    rf"(?P<few_scale>(?:a\s+)?few)\s+(?P<few_scale_unit>hundred|thousand|million|billion)"
+    rf"|(?P<scale_number>{_DIGIT_NUMBER})\s+(?P<scale>hundred|thousand|million|billion)"
+    rf"|(?P<word_scale_number>{_WORD_NUMBER})\s+(?P<word_scale>hundred|thousand|million|billion)"
     rf"|(?P<compact_number>{_DIGIT_NUMBER})(?P<compact>[bBkKmM])"
     rf"|(?P<plain_number>{_DIGIT_NUMBER})"
     rf"|(?P<word_number>{_WORD_NUMBER})"
@@ -128,6 +143,12 @@ def numbers_to_units(text: str) -> dict[Decimal, set[str]]:
 def _parse_number(match: re.Match[str]) -> Decimal:
     if match.group("scale_number"):
         return _decimal(match.group("scale_number")) * _SCALE[match.group("scale").casefold()]
+    if match.group("word_scale_number"):
+        return _parse_word_number(match.group("word_scale_number")) * _SCALE[
+            match.group("word_scale").casefold()
+        ]
+    if match.group("few_scale"):
+        return Decimal("3") * _SCALE[match.group("few_scale_unit").casefold()]
     if match.group("compact_number"):
         return _decimal(match.group("compact_number")) * _COMPACT_SCALE[
             match.group("compact").casefold()

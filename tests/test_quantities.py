@@ -140,3 +140,12 @@ def test_numbers_to_units_groups_units_by_decimal_number() -> None:
     quantities = numbers_to_units("The run used four GPUs and four samples.")
 
     assert quantities == {Decimal("4"): {"gpu", "sample"}}
+
+
+def test_quantity_units_normalizes_word_scales_and_few_scales() -> None:
+    quantities = quantity_units("The dataset contains a few hundred masks and one billion images.")
+
+    assert quantities == {
+        "mask": (Decimal("300"),),
+        "image": (Decimal("1000000000"),),
+    }

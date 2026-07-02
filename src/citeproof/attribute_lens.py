@@ -68,11 +68,20 @@ GROUPS = (
     AttributeGroup(
         "Availability",
         (
-            ("public", (r"\bpublicly\s+available\b", r"\bopen\s+source\b")),
+            (
+                "public",
+                (
+                    r"\bpublicly\s+available\b",
+                    r"\bopen\s+source\b",
+                    r"\bopen\s+(?:model\s+)?weights?\b",
+                ),
+            ),
             (
                 "private",
                 (
                     r"\bnot(?:\s+\w+){0,3}\s+publicly\s+available\b",
+                    r"\bclosed\s+(?:model\s+)?weights?\b",
+                    r"\bunavailable\b",
                     r"\bprivate\b",
                     r"\bproprietary\b",
                 ),
@@ -112,7 +121,7 @@ GROUPS = (
 TRIGGER_WORDS_RE = re.compile(
     r"\b("
     r"abstractive|adamw?|audio|available|chinese|classification|classify|"
-    r"dev|english|extractive|french|german|gradient|images?|labeled|labels|"
+    r"closed|dev|english|extractive|french|german|gradient|images?|labeled|labels|"
     r"multi-agent|not|observational|open|optimization|private|proprietary|"
     r"publicly|randomi[sz]ed|retrieval|retrieve|rmsprop|segmentation|segment|"
     r"sgd|single-agent|source|spanish|speech|stochastic|summari[sz]ation|"

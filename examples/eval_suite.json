@@ -33,6 +33,14 @@
       "locked": false
     },
     {
+      "name": "diagnostic_contradictions",
+      "path": "diagnostics/claim_support.jsonl",
+      "split": "diagnostic_v0",
+      "layer": "diagnostic",
+      "source_type": "diagnostic_real_pattern",
+      "locked": false
+    },
+    {
       "name": "heldout_real_v0",
       "path": "heldout_real/claim_support.jsonl",
       "split": "heldout_real_v0",
@@ -62,6 +70,10 @@
       "purpose": "Generated or manually designed adversarial stress cases.",
       "claimable": false
     },
+    "diagnostic": {
+      "purpose": "Inspectable real-paper-pattern cases used to diagnose verifier weaknesses without touching locked heldout failures.",
+      "claimable": false
+    },
     "external": {
       "purpose": "Adapters for public benchmarks such as SciFact, SCitance, and FActScore-style datasets.",
       "claimable": true
@@ -77,6 +89,13 @@
       "min_unsupported_recall": 1.0
     },
     "challenge": {
+      "max_false_supported_rate": 0.0,
+      "min_accuracy": 1.0,
+      "max_manual_review_rate": 0.35,
+      "min_contradiction_recall": 1.0,
+      "min_unsupported_recall": 1.0
+    },
+    "diagnostic": {
       "max_false_supported_rate": 0.0,
       "min_accuracy": 1.0,
       "max_manual_review_rate": 0.35,

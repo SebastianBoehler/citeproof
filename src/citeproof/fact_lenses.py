@@ -76,6 +76,7 @@ GENERIC_ANCHORS = {
     "YISI",
 }
 ENTITY_CONFLICT_MIN_OVERLAP = 0.45
+UNIT_CONFLICT_EXEMPT_UNITS = {"example", "image", "mask", "record", "sample", "text"}
 
 
 def inspect_facts(claim: str, evidence: str) -> FactInspection:
@@ -166,6 +167,8 @@ def _unit_conflicts(claim: str, evidence: str) -> list[str]:
     findings: list[str] = []
     for number, claim_units in claim_numbers.items():
         evidence_units = evidence_numbers.get(number, set())
+        if claim_units | evidence_units <= UNIT_CONFLICT_EXEMPT_UNITS:
+            continue
         if evidence_units and not claim_units & evidence_units:
             findings.append(
                 f"Unit conflict for {number}: claim {sorted(claim_units)} vs evidence {sorted(evidence_units)}"

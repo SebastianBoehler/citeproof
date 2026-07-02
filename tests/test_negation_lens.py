@@ -34,6 +34,33 @@ def test_detects_without_negation_conflict() -> None:
     assert any("offline pretraining" in finding for finding in findings)
 
 
+def test_detects_dependency_avoidance_conflict() -> None:
+    findings = inspect_negation_and_comparator_conflicts(
+        "The training procedure depends on human labels identifying harmful outputs.",
+        "The training procedure avoids human labels for harmfulness.",
+    )
+
+    assert any("Negation conflict" in finding for finding in findings)
+
+
+def test_detects_requirement_not_necessary_conflict() -> None:
+    findings = inspect_negation_and_comparator_conflicts(
+        "The classifier requires convolutional networks.",
+        "The classifier shows that convolutional networks are not necessary.",
+    )
+
+    assert any("Negation conflict" in finding for finding in findings)
+
+
+def test_detects_reward_modeling_nominalization_conflict() -> None:
+    findings = inspect_negation_and_comparator_conflicts(
+        "The preference method trains an explicit reward model.",
+        "The preference method works without explicit reward modeling.",
+    )
+
+    assert any("Negation conflict" in finding for finding in findings)
+
+
 def test_ignores_unrelated_negated_object() -> None:
     findings = inspect_negation_and_comparator_conflicts(
         "The method uses LoRA adapters.",
