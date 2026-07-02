@@ -157,11 +157,11 @@ function renderInspector() {{
   const trace = result.trace || {{}};
   const evidence = (result.evidence || []).map((item, index) => `
     <div class="evidence">
-      <div class="source">Evidence ${{index + 1}} - ${{esc(item.source_id)}}${{item.page ? `, page ${{esc(item.page)}}` : ""}} - score ${{Number(item.score || 0).toFixed(4)}}</div>
+      <div class="source">Evidence ${{index + 1}} - ${{esc(item.title || item.source_id)}}${{item.citation_key ? ` - ${{esc(item.citation_key)}}` : ""}}${{item.page ? `, page ${{esc(item.page)}}` : ""}} - score ${{Number(item.score || 0).toFixed(4)}}</div>
       <blockquote>${{highlight(item.text, result.claim)}}</blockquote>
     </div>`).join("");
   const atoms = (trace.atom_verifications || []).map((atom) =>
-    `<tr><td>${{esc(atom.label)}}</td><td>${{esc(atom.text)}}</td><td>${{esc(atom.failure_mode || "none")}}</td></tr>`
+    `<tr><td>${{esc(atom.label)}}</td><td>${{esc(atom.text)}}</td><td>${{esc(atom.failure_mode || "none")}}</td><td>${{esc(atom.candidate_count ?? 0)}}</td><td>${{esc(atom.best_support_rank ?? "none")}}</td><td>${{esc(atom.best_contradiction_rank ?? "none")}}</td></tr>`
   ).join("");
   document.getElementById("inspector").innerHTML = `
     <div class="panel">
@@ -170,13 +170,15 @@ function renderInspector() {{
       <div class="why-label">
         <p class="why-title">Why this label?</p>
         <div class="why-row"><span class="why-key">Failure mode</span><span class="failure-mode-value">${{esc(result.failure_mode || "none")}}</span></div>
+        <div class="why-row"><span class="why-key">Confidence</span><span>${{Number(result.confidence || 0).toFixed(2)}}</span></div>
+        <div class="why-row"><span class="why-key">Source gate</span><span>${{esc(trace.source_gate_status || "unknown")}}</span></div>
         <div class="why-row"><span class="why-key">Reason</span><span>${{esc(result.reason || "No reason reported.")}}</span></div>
         <div class="why-row"><span class="why-key">Review action</span><span>${{esc(trace.review_action || "none")}}</span></div>
       </div>
     </div>
     <div class="panel"><h3>Citation Keys</h3><div class="claim-bottom">${{(result.citations || []).map((key) => `<span class="cite">${{esc(key)}}</span>`).join("") || "none"}}</div></div>
     <div class="panel"><h3>Evidence Snippets</h3>${{evidence || "<p>No evidence spans were selected.</p>"}}</div>
-    <div class="panel"><h3>Atomic Checks</h3><table><thead><tr><th>Label</th><th>Atom</th><th>Failure</th></tr></thead><tbody>${{atoms || '<tr><td colspan="3">No atom trace available.</td></tr>'}}</tbody></table></div>`;
+    <div class="panel"><h3>Atomic Evidence Trace</h3><table><thead><tr><th>Label</th><th>Atom</th><th>Failure</th><th>Candidates</th><th>Best support</th><th>Best contradiction</th></tr></thead><tbody>${{atoms || '<tr><td colspan="6">No atom trace available.</td></tr>'}}</tbody></table></div>`;
 }}
 function render() {{ renderStats(); renderFilters(); renderPaper(); renderInspector(); }}
 render();

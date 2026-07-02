@@ -1,5 +1,12 @@
 from citeproof.dashboard import paper_report_to_html, results_to_html
-from citeproof.models import EvidenceSpan, FailureMode, Label, VerificationResult
+from citeproof.models import (
+    AtomVerification,
+    ClaimVerificationTrace,
+    EvidenceSpan,
+    FailureMode,
+    Label,
+    VerificationResult,
+)
 from citeproof.paper import PaperVerificationReport
 
 
@@ -63,6 +70,27 @@ def test_paper_report_to_html_contains_mapping_summary() -> None:
 
 
 def test_results_to_html_makes_failure_reason_prominent() -> None:
+    trace = ClaimVerificationTrace(
+        claim="Method X works everywhere.",
+        citations=("smith2024",),
+        source_gate_status="resolved",
+        atom_verifications=(
+            AtomVerification(
+                text="Method X works everywhere.",
+                context="Method X works everywhere.",
+                label=Label.PARTIALLY_SUPPORTED,
+                confidence=0.72,
+                failure_mode=FailureMode.SCOPE_OVERSTATEMENT,
+                candidate_count=3,
+                best_support_rank=1,
+                best_contradiction_rank=None,
+            ),
+        ),
+        final_label=Label.PARTIALLY_SUPPORTED,
+        final_confidence=0.72,
+        final_failure_mode=FailureMode.SCOPE_OVERSTATEMENT,
+        review_action="narrow the claim scope",
+    )
     result = VerificationResult(
         claim="Method X works everywhere.",
         label=Label.PARTIALLY_SUPPORTED,
@@ -71,6 +99,7 @@ def test_results_to_html_makes_failure_reason_prominent() -> None:
         evidence=(),
         reason="Evidence supports a narrower claim than the draft states.",
         failure_mode=FailureMode.SCOPE_OVERSTATEMENT,
+        trace=trace,
     )
 
     html = results_to_html([result])
@@ -78,3 +107,7 @@ def test_results_to_html_makes_failure_reason_prominent() -> None:
     assert "Why this label?" in html
     assert "failure-mode-value" in html
     assert "scope_overstatement" in html
+    assert "Source gate" in html
+    assert "Atomic Evidence Trace" in html
+    assert "Best contradiction" in html
+    assert "narrow the claim scope" in html

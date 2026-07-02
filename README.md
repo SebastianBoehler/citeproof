@@ -44,6 +44,9 @@ uv run citeproof eval examples/claim_support.jsonl
 uv run citeproof eval examples/edge_cases/claim_support.jsonl \
   --details-output reports/edge_cases_heuristic.json
 uv run citeproof eval-suite examples/eval_suite.json
+uv run citeproof convert-external-benchmark scifact_export.jsonl \
+  --format scifact \
+  --output reports/scifact_claim_support.jsonl
 uv run citeproof eval-draft examples/hallucination/draft.md \
   --sources examples/hallucination/sources \
   --bib examples/hallucination/references.bib \
@@ -182,16 +185,21 @@ aggregate metrics and fails when reliability gates are violated.
 
 ![Benchmark comparison](assets/benchmark_method_comparison.svg)
 
-The figure compares CiteProof against lexical overlap and the optional NLI
-adapter on the current regression, challenge, and held-out real-paper layers.
+The figure compares CiteProof against the direct heuristic judge, lexical
+overlap, and the optional NLI adapter on the current regression, challenge,
+diagnostic, and held-out real-paper layers.
 Accuracy is better when higher; false-supported and manual-review rates are
 better when lower. Generate the comparison with:
 
 ```bash
 uv run --extra nli citeproof compare-benchmark examples/eval_suite.json \
-  --methods citeproof,lexical,nli \
+  --methods citeproof,heuristic,nli,lexical \
   --json-output reports/benchmark_comparison.json
 ```
+
+`raw-llm` is also available as an optional comparison method when
+`OPENAI_API_KEY` is set; it is not used in CI because it requires networked
+model calls.
 
 The `heldout_real_v0` split is useful for development tracking, but it has been
 inspected during implementation. `heldout_real_v1` is the fresh frozen
@@ -201,6 +209,10 @@ Locked benchmark datasets must be treated as aggregate-only evaluation sets.
 `eval-suite` and `compare-benchmark` redact per-case failures for entries marked
 `"locked": true`; iterate on regression and challenge layers, then run locked
 held-out layers only as a final score check.
+
+The `diagnostic` layer is explicitly unlocked and inspectable. Use it for
+targeted contradiction and scope debugging instead of reading locked held-out
+case failures.
 
 ## Check Modes
 
@@ -213,3 +225,6 @@ CiteProof exposes checks as separate commands rather than one loose mode flag:
 - Strict mode: `verify-paper` combines bibliography, source, retrieval, fact-lens, and optional NLI checks.
 - Benchmark mode: `eval`, `eval-draft`, and `eval-suite` report `accuracy`,
   `macro_f1`, `false_supported_rate`, and per-case or suite-level failures.
+- External-adapter mode: `convert-external-benchmark` normalizes local
+  SciFact-style, SCitance-style, and FActScore-style exports into CiteProof
+  claim-support JSONL.
